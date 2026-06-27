@@ -63,12 +63,12 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
             variant="ghost"
             size="icon"
             onClick={() => setCollapsed(!collapsed)}
-            className="hidden lg:flex hover:bg-zinc-800"
+            className="hidden lg:flex hover:bg-zinc-800 active:scale-90 transition-transform duration-150"
           >
             {collapsed ? (
-              <ChevronRight className="h-4 w-4 text-zinc-400" />
+              <ChevronRight className="h-4 w-4 text-zinc-400 transition-transform duration-300" />
             ) : (
-              <ChevronLeft className="h-4 w-4 text-zinc-400" />
+              <ChevronLeft className="h-4 w-4 text-zinc-400 transition-transform duration-300" />
             )}
           </Button>
           <Button
@@ -95,7 +95,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
                   'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                   activeView === item.id
                     ? 'bg-sky-600/20 text-sky-400'
-                    : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                    : 'text-zinc-400 hover:bg-zinc-800 hover:text-white hover:scale-[1.02] active:scale-[0.98]'
                 )}
               >
                 <item.icon className="h-5 w-5 flex-shrink-0" />
@@ -116,7 +116,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
                   'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                   activeView === item.id
                     ? 'bg-sky-600/20 text-sky-400'
-                    : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                    : 'text-zinc-400 hover:bg-zinc-800 hover:text-white hover:scale-[1.02] active:scale-[0.98]'
                 )}
               >
                 <item.icon className="h-5 w-5 flex-shrink-0" />

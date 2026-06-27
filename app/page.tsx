@@ -275,7 +275,9 @@ function HotelsPMSContent() {
         <Sidebar activeView={activeView} onViewChange={setActiveView} />
       }
     >
-      {renderContent()}
+      <div key={activeView} className="animate-fade-in">
+        {renderContent()}
+      </div>
       <BookingModal
         open={modalOpen}
         onOpenChange={setModalOpen}

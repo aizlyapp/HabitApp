@@ -390,7 +390,7 @@ export function BookingDetailDrawer({
                 <Button
                   onClick={handleCheckIn}
                   disabled={loading !== null}
-                  className="bg-emerald-600 text-white hover:bg-emerald-700"
+                  className="bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 transition-all duration-150"
                 >
                   {loading === 'checkin' ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -404,7 +404,7 @@ export function BookingDetailDrawer({
                 <Button
                   onClick={handleCheckOut}
                   disabled={loading !== null}
-                  className="bg-zinc-600 text-white hover:bg-zinc-700"
+                  className="bg-zinc-600 text-white hover:bg-zinc-700 active:scale-95 transition-all duration-150"
                 >
                   {loading === 'checkout' ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -427,7 +427,7 @@ export function BookingDetailDrawer({
                 variant="outline"
                 onClick={onEdit}
                 disabled={loading !== null || !canCancel}
-                className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white active:scale-95 transition-all duration-150"
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Modificar
@@ -438,7 +438,7 @@ export function BookingDetailDrawer({
                   variant="outline"
                   onClick={() => setShowCancelConfirm(true)}
                   disabled={loading !== null}
-                  className="border-rose-700/50 text-rose-400 hover:bg-rose-950/30"
+                  className="border-rose-700/50 text-rose-400 hover:bg-rose-950/30 active:scale-95 transition-all duration-150"
                 >
                   <XCircle className="h-4 w-4 mr-2" />
                   Cancelar
