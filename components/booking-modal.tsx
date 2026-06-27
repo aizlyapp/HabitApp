@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { format } from 'date-fns';
 import {
   Dialog,
@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { AlertCircle, Loader2, User } from 'lucide-react';
+import { AlertCircle, Loader2, User, Users } from 'lucide-react';
 import type { Room, Reservation, Guest } from '@/lib/data/types';
 
 interface BookingModalProps {
@@ -35,6 +35,7 @@ interface BookingModalProps {
     guest_name: string;
     guest_email: string;
     guest_phone: string;
+    guest_count: number;
     check_in: string;
     check_out: string;
     total_amount: number;
@@ -57,12 +58,15 @@ export function BookingModal({
     guest_name: '',
     guest_email: '',
     guest_phone: '',
+    guest_count: 1,
     check_in: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '',
     check_out: selectedDate
       ? format(new Date(selectedDate.getTime() + 86400000), 'yyyy-MM-dd')
       : '',
+    total_amount: 0,
     notes: '',
   });
+  const [manualTotal, setManualTotal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,26 +78,51 @@ export function BookingModal({
           guest_name: editingBooking.guest_name,
           guest_email: editingBooking.guest_email,
           guest_phone: editingBooking.guest_phone,
+          guest_count: editingBooking.guest_count || 1,
           check_in: editingBooking.check_in,
           check_out: editingBooking.check_out,
+          total_amount: editingBooking.total_amount,
           notes: editingBooking.notes || '',
         });
+        setManualTotal(true);
       } else {
         setFormData({
           room_id: selectedRoom?.id || '',
           guest_name: '',
           guest_email: '',
           guest_phone: '+54 ',
+          guest_count: 1,
           check_in: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '',
           check_out: selectedDate
             ? format(new Date(selectedDate.getTime() + 86400000), 'yyyy-MM-dd')
             : '',
+          total_amount: 0,
           notes: '',
         });
+        setManualTotal(false);
       }
       setError(null);
     }
   }, [open, editingBooking, selectedRoom, selectedDate]);
+
+  const selectedRoomData = rooms.find((r) => r.id === formData.room_id);
+  const checkIn = formData.check_in ? new Date(formData.check_in) : null;
+  const checkOut = formData.check_out ? new Date(formData.check_out) : null;
+  const nights =
+    checkIn && checkOut
+      ? Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))
+      : 0;
+
+  const calculatedTotal = useMemo(
+    () => (selectedRoomData?.precioPorNoche || 0) * formData.guest_count * Math.max(nights, 0),
+    [selectedRoomData?.precioPorNoche, formData.guest_count, nights]
+  );
+
+  useEffect(() => {
+    if (!manualTotal) {
+      setFormData((f) => ({ ...f, total_amount: calculatedTotal }));
+    }
+  }, [calculatedTotal, manualTotal]);
 
   const [nameSuggestions, setNameSuggestions] = useState<Guest[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -165,21 +194,15 @@ export function BookingModal({
 
     setLoading(true);
 
-    const room = rooms.find((r) => r.id === formData.room_id);
-    const checkIn = new Date(formData.check_in);
-    const checkOut = new Date(formData.check_out);
-    const nights = Math.ceil(
-      (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
-    );
-
     const result = await onSubmit({
       room_id: formData.room_id,
       guest_name: formData.guest_name.trim(),
       guest_email: formData.guest_email.trim(),
       guest_phone: formData.guest_phone.trim(),
+      guest_count: formData.guest_count,
       check_in: formData.check_in,
       check_out: formData.check_out,
-      total_amount: nights * (room?.precioPorNoche || 0),
+      total_amount: formData.total_amount,
       notes: formData.notes || undefined,
     });
 
@@ -192,23 +215,16 @@ export function BookingModal({
         guest_name: '',
         guest_email: '',
         guest_phone: '',
+        guest_count: 1,
         check_in: '',
         check_out: '',
+        total_amount: 0,
         notes: '',
       });
     } else {
       setError(result.error || 'Error al crear la reserva');
     }
   };
-
-  const selectedRoomData = rooms.find((r) => r.id === formData.room_id);
-  const checkIn = formData.check_in ? new Date(formData.check_in) : null;
-  const checkOut = formData.check_out ? new Date(formData.check_out) : null;
-  const nights =
-    checkIn && checkOut
-      ? Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))
-      : 0;
-  const total = nights * (selectedRoomData?.precioPorNoche || 0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -285,17 +301,71 @@ export function BookingModal({
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="guestCount" className="text-zinc-300">
+              Cantidad de personas
+            </Label>
+            <Input
+              id="guestCount"
+              type="number"
+              min={1}
+              max={selectedRoomData?.capacidad || 20}
+              value={formData.guest_count}
+              onChange={(e) => {
+                const val = Math.max(1, parseInt(e.target.value) || 1);
+                setFormData({ ...formData, guest_count: val });
+              }}
+              className="bg-zinc-800 border-zinc-700 text-white"
+            />
+          </div>
+
           {nights > 0 && selectedRoomData && (
-            <div className="rounded-lg bg-zinc-800/50 border border-zinc-700 p-3">
-              <div className="flex justify-between text-sm">
+            <div className="rounded-lg bg-zinc-800/50 border border-zinc-700 p-3 space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Users className="h-4 w-4 text-zinc-500" />
                 <span className="text-zinc-400">
-                  {nights} noche{nights > 1 ? 's' : ''} x
-                  Habitación {selectedRoomData.nombre}
+                  {formData.guest_count} persona{formData.guest_count !== 1 ? 's' : ''} x {nights} noche{nights > 1 ? 's' : ''}
                 </span>
-                <span className="text-white font-medium">
-                  ${total.toLocaleString('es-AR')}
-                </span>
+                <span className="text-zinc-500">×</span>
+                <span className="text-zinc-300">${selectedRoomData.precioPorNoche.toLocaleString('es-AR')}/pers</span>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-zinc-500">Total calculado</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-semibold text-white">
+                    ${formData.total_amount.toLocaleString('es-AR')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setManualTotal(true)}
+                    className="text-xs text-sky-400 hover:underline"
+                  >
+                    Editar
+                  </button>
+                </div>
+              </div>
+              {manualTotal && (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={formData.total_amount}
+                    onChange={(e) =>
+                      setFormData({ ...formData, total_amount: Number(e.target.value) })
+                    }
+                    className="bg-zinc-800 border-zinc-700 text-white text-sm w-full"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setManualTotal(false);
+                      setFormData((f) => ({ ...f, total_amount: calculatedTotal }));
+                    }}
+                    className="text-xs text-emerald-400 hover:underline whitespace-nowrap"
+                  >
+                    Auto
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

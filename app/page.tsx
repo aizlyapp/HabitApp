@@ -56,6 +56,7 @@ function HotelsPMSContent() {
     guest_name: string;
     guest_email: string;
     guest_phone: string;
+    guest_count: number;
     check_in: string;
     check_out: string;
     total_amount: number;
@@ -67,6 +68,7 @@ function HotelsPMSContent() {
         guest_name: booking.guest_name,
         guest_email: booking.guest_email,
         guest_phone: booking.guest_phone,
+        guest_count: booking.guest_count,
         check_in: booking.check_in,
         check_out: booking.check_out,
         total_amount: booking.total_amount,

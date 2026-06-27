@@ -24,6 +24,7 @@ export interface Reservation {
   guest_name: string;
   guest_email: string;
   guest_phone: string;
+  guest_count: number;
   check_in: string;
   check_out: string;
   total_amount: number;
@@ -39,6 +40,7 @@ export interface ReservationInsert {
   guest_name: string;
   guest_email: string;
   guest_phone: string;
+  guest_count?: number;
   check_in: string;
   check_out: string;
   total_amount?: number;
@@ -54,6 +56,7 @@ export interface ReservationUpdate {
   guest_name?: string;
   guest_email?: string;
   guest_phone?: string;
+  guest_count?: number;
   check_in?: string;
   check_out?: string;
   total_amount?: number;

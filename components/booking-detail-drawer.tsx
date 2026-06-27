@@ -16,6 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   User,
+  Users,
   Mail,
   Phone,
   Calendar,
@@ -229,6 +230,15 @@ export function BookingDetailDrawer({
               </div>
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-3">
+                  <Users className="h-4 w-4 text-zinc-500" />
+                  <span className="text-zinc-400">Huéspedes</span>
+                </div>
+                <span className="text-white">
+                  {booking.guest_count || 1}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-3">
                   <BedDouble className="h-4 w-4 text-zinc-500" />
                   <span className="text-zinc-400">Tipo</span>
                 </div>
@@ -237,7 +247,7 @@ export function BookingDetailDrawer({
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-3">
                   <DollarSign className="h-4 w-4 text-zinc-500" />
-                  <span className="text-zinc-400">Precio/noche</span>
+                  <span className="text-zinc-400">Precio base/pers</span>
                 </div>
                 <span className="text-white">
                   ${room.precioPorNoche.toLocaleString('es-AR')}
