@@ -319,10 +319,7 @@ export function BusinessSettings() {
                   {config.banco && (
                     <p className="text-[10px] text-zinc-500">{config.banco}</p>
                   )}
-                  {config.aliasCbuCvu && (
-                    <p className="mt-1 text-[10px] text-zinc-400 break-all">{config.aliasCbuCvu}</p>
-                  )}
-                  {config.linkPago && (
+                  {config.linkPago ? (
                     <a
                       href={config.linkPago}
                       target="_blank"
@@ -331,10 +328,9 @@ export function BusinessSettings() {
                     >
                       {config.linkPago}
                     </a>
-                  )}
-                  {config.aliasCbuCvu && !config.linkPago && (
+                  ) : config.aliasCbuCvu ? (
                     <p className="mt-1 text-[10px] text-zinc-400 break-all">{config.aliasCbuCvu}</p>
-                  )}
+                  ) : null}
                   {qrValue && (
                     <div className="mt-2 flex justify-center">
                       <QRCodeSVG value={qrValue} size={60} level="M" />

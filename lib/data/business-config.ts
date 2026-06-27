@@ -40,28 +40,23 @@ export function hasPaymentData(config: BusinessConfig): boolean {
   return !!(config.aliasCbuCvu || config.linkPago);
 }
 
-function extractCBU(raw: string): string | null {
-  const digits = raw.replace(/\D/g, '');
-  if (digits.length === 22) return digits;
-  return null;
-}
-
 export function qrContent(config: BusinessConfig, amount?: number): string {
-  if (config.linkPago) {
-    const url = config.linkPago.trim();
-    if (amount && !url.includes('amount')) {
-      const separator = url.includes('?') ? '&' : '?';
-      return `${url}${separator}amount=${amount}`;
+  const link = config.linkPago?.trim();
+  if (link) {
+    if (amount) {
+      const sep = link.includes('?') ? '&' : '?';
+      return link.includes('amount') ? link : `${link}${sep}amount=${amount}`;
     }
-    return url;
+    return link;
   }
 
-  if (config.aliasCbuCvu) {
-    const cbu = extractCBU(config.aliasCbuCvu);
-    if (cbu) {
-      return `https://debin.com.ar/pagar/${cbu}`;
-    }
+  const raw = config.aliasCbuCvu?.trim();
+  if (!raw) return '';
+
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 22) {
+    return `https://debin.com.ar/pagar/${digits}`;
   }
 
-  return '';
+  return raw;
 }
