@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -36,7 +36,8 @@ import {
   Check,
 } from 'lucide-react';
 import type { Room, Reservation, PaymentStatus } from '@/lib/data/types';
-import { loadConfig, hasPaymentData, qrContent } from '@/lib/data/business-config';
+import { loadConfigFromDB, hasPaymentData, qrContent, defaultConfig } from '@/lib/data/business-config';
+import { createClient } from '@/lib/supabase/client';
 
 interface BookingDetailDrawerProps {
   open: boolean;
@@ -84,14 +85,30 @@ export function BookingDetailDrawer({
   onCancel,
   onUpdatePaymentStatus,
 }: BookingDetailDrawerProps) {
+  const supabase = createClient();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [copiedPayment, setCopiedPayment] = useState(false);
+  const [businessConfig, setBusinessConfig] = useState(defaultConfig);
+  const [configLoading, setConfigLoading] = useState(true);
+
+  useEffect(() => {
+    if (!open) return;
+    setConfigLoading(true);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.id) {
+        loadConfigFromDB(user.id).then((cfg) => {
+          setBusinessConfig(cfg);
+          setConfigLoading(false);
+        });
+      } else {
+        setConfigLoading(false);
+      }
+    });
+  }, [open, supabase]);
 
   if (!booking || !room) return null;
-
-  const businessConfig = loadConfig();
 
   const handleCheckIn = async () => {
     setLoading('checkin');
@@ -296,7 +313,11 @@ export function BookingDetailDrawer({
 
           {/* Payment Info */}
           <Separator className="bg-zinc-800" />
-          {hasPaymentData(businessConfig) ? (
+          {configLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-5 w-5 animate-spin text-zinc-500" />
+            </div>
+          ) : hasPaymentData(businessConfig) ? (
             <div className="space-y-3 rounded-lg border border-emerald-800/40 bg-emerald-950/20 p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

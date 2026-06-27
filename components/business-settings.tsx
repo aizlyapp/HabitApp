@@ -18,19 +18,34 @@ import {
   Check,
   CreditCard,
   Link,
+  Loader2,
 } from 'lucide-react';
 import type { BusinessConfig } from '@/lib/data/business-config';
-import { loadConfig, saveConfig, qrContent } from '@/lib/data/business-config';
+import { loadConfigFromDB, saveConfigToDB, defaultConfig, qrContent } from '@/lib/data/business-config';
+import { createClient } from '@/lib/supabase/client';
 
 export function BusinessSettings() {
-  const [config, setConfig] = useState<BusinessConfig>(loadConfig);
+  const supabase = createClient();
+  const [config, setConfig] = useState<BusinessConfig>(defaultConfig);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setConfig(loadConfig());
-  }, []);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.id) {
+        setUserId(user.id);
+        loadConfigFromDB(user.id).then((cfg) => {
+          setConfig(cfg);
+          setLoading(false);
+        });
+      } else {
+        setLoading(false);
+      }
+    });
+  }, [supabase]);
 
   const update = <K extends keyof BusinessConfig>(
     field: K,
@@ -40,10 +55,15 @@ export function BusinessSettings() {
     setSaved(false);
   };
 
-  const handleSave = () => {
-    saveConfig(config);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    if (!userId) return;
+    try {
+      await saveConfigToDB(userId, config);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      console.error('Error saving business config:', err);
+    }
   };
 
   const handleLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,6 +118,14 @@ export function BusinessSettings() {
   }, [config.nombre]);
 
   const qrValue = qrContent(config);
+
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-col gap-6 overflow-auto p-4 lg:p-6">
