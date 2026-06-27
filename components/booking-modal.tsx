@@ -70,30 +70,33 @@ export function BookingModal({
     guest_name: '',
     guest_email: '',
     guest_phone: '',
+    price_per_person: getSavedPricePerPerson(),
     guest_count: 1,
     check_in: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '',
     check_out: selectedDate
       ? format(new Date(selectedDate.getTime() + 86400000), 'yyyy-MM-dd')
       : '',
-    total_amount: getSavedPricePerPerson(),
     notes: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const totalAmount = formData.price_per_person * formData.guest_count;
+
   useEffect(() => {
     if (open) {
       if (editingBooking) {
         const gc = editingBooking.guest_count || 1;
+        const ppp = gc > 0 ? Math.round(editingBooking.total_amount / gc) : editingBooking.total_amount;
         setFormData({
           room_id: editingBooking.room_id,
           guest_name: editingBooking.guest_name,
           guest_email: editingBooking.guest_email,
           guest_phone: editingBooking.guest_phone,
+          price_per_person: ppp,
           guest_count: gc,
           check_in: editingBooking.check_in,
           check_out: editingBooking.check_out,
-          total_amount: editingBooking.total_amount,
           notes: editingBooking.notes || '',
         });
       } else {
@@ -103,12 +106,12 @@ export function BookingModal({
           guest_name: '',
           guest_email: '',
           guest_phone: '+54 ',
+          price_per_person: saved,
           guest_count: 1,
           check_in: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '',
           check_out: selectedDate
             ? format(new Date(selectedDate.getTime() + 86400000), 'yyyy-MM-dd')
             : '',
-          total_amount: saved,
           notes: '',
         });
       }
@@ -117,9 +120,6 @@ export function BookingModal({
   }, [open, editingBooking, selectedRoom, selectedDate]);
 
   const selectedRoomData = rooms.find((r) => r.id === formData.room_id);
-
-  const pricePerPerson =
-    formData.guest_count > 0 ? formData.total_amount / formData.guest_count : 0;
 
   const [nameSuggestions, setNameSuggestions] = useState<Guest[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -199,24 +199,23 @@ export function BookingModal({
       guest_count: formData.guest_count,
       check_in: formData.check_in,
       check_out: formData.check_out,
-      total_amount: formData.total_amount,
+      total_amount: totalAmount,
       notes: formData.notes || undefined,
     });
 
     setLoading(false);
 
     if (result.success) {
-      savePricePerPerson(pricePerPerson);
       onOpenChange(false);
       setFormData({
         room_id: '',
         guest_name: '',
         guest_email: '',
         guest_phone: '',
+        price_per_person: getSavedPricePerPerson(),
         guest_count: 1,
         check_in: '',
         check_out: '',
-        total_amount: getSavedPricePerPerson(),
         notes: '',
       });
     } else {
@@ -299,50 +298,50 @@ export function BookingModal({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="guestCount" className="text-zinc-300">
-              Cantidad de personas
-            </Label>
-            <Input
-              id="guestCount"
-              type="number"
-              min={1}
-              max={selectedRoomData?.capacidad || 20}
-              value={formData.guest_count}
-              onChange={(e) => {
-                const newCount = Math.max(1, parseInt(e.target.value) || 1);
-                const perPerson = formData.guest_count > 0
-                  ? formData.total_amount / formData.guest_count
-                  : 0;
-                setFormData({
-                  ...formData,
-                  guest_count: newCount,
-                  total_amount: Math.round(perPerson * newCount),
-                });
-              }}
-              className="bg-zinc-800 border-zinc-700 text-white"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="pricePerPerson" className="text-zinc-300">
+                Precio por persona
+              </Label>
+              <Input
+                id="pricePerPerson"
+                type="number"
+                value={formData.price_per_person || ''}
+                onChange={(e) => {
+                  const val = Math.max(0, Number(e.target.value));
+                  setFormData({ ...formData, price_per_person: val });
+                  savePricePerPerson(val);
+                }}
+                className="bg-zinc-800 border-zinc-700 text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="guestCount" className="text-zinc-300">
+                Cantidad de personas
+              </Label>
+              <Input
+                id="guestCount"
+                type="number"
+                min={1}
+                max={selectedRoomData?.capacidad || 20}
+                value={formData.guest_count}
+                onChange={(e) => {
+                  const val = Math.max(1, parseInt(e.target.value) || 1);
+                  setFormData({ ...formData, guest_count: val });
+                }}
+                className="bg-zinc-800 border-zinc-700 text-white"
+              />
+            </div>
           </div>
 
-          <div>
-            <Label htmlFor="totalAmount" className="text-zinc-300">
-              Total (por las {formData.guest_count} personas)
-            </Label>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-zinc-500 text-lg">$</span>
-              <Input
-                id="totalAmount"
-                type="number"
-                value={formData.total_amount || ''}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  setFormData({ ...formData, total_amount: val });
-                  if (formData.guest_count > 0) {
-                    savePricePerPerson(Math.round(val / formData.guest_count));
-                  }
-                }}
-                className="bg-zinc-800 border-zinc-700 text-white text-lg"
-              />
+          <div className="rounded-lg bg-zinc-800/50 border border-zinc-700 p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-zinc-400">
+                {formData.guest_count} persona{formData.guest_count !== 1 ? 's' : ''} × ${formData.price_per_person.toLocaleString('es-AR')}
+              </span>
+              <span className="text-xl font-semibold text-white">
+                ${totalAmount.toLocaleString('es-AR')}
+              </span>
             </div>
           </div>
 
