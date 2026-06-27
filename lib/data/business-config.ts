@@ -53,10 +53,5 @@ export function qrContent(config: BusinessConfig, amount?: number): string {
   const raw = config.aliasCbuCvu?.trim();
   if (!raw) return '';
 
-  const digits = raw.replace(/\D/g, '');
-  if (digits.length === 22) {
-    return `https://debin.com.ar/pagar/${digits}`;
-  }
-
   return raw;
 }
