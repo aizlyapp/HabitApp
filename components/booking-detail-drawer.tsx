@@ -247,7 +247,7 @@ export function BookingDetailDrawer({
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-3">
                   <DollarSign className="h-4 w-4 text-zinc-500" />
-                  <span className="text-zinc-400">Precio base/pers</span>
+                  <span className="text-zinc-400">Precio base/pers/noche</span>
                 </div>
                 <span className="text-white">
                   ${room.precioPorNoche.toLocaleString('es-AR')}

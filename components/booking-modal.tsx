@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import {
   Dialog,
@@ -53,6 +53,14 @@ export function BookingModal({
   editingBooking,
   onSubmit,
 }: BookingModalProps) {
+  const LAST_TOTAL_KEY = 'habitapp_last_total';
+
+  const getLastTotal = () => {
+    if (typeof window === 'undefined') return 0;
+    const saved = localStorage.getItem(LAST_TOTAL_KEY);
+    return saved ? Number(saved) : 0;
+  };
+
   const [formData, setFormData] = useState({
     room_id: selectedRoom?.id || '',
     guest_name: '',
@@ -63,10 +71,9 @@ export function BookingModal({
     check_out: selectedDate
       ? format(new Date(selectedDate.getTime() + 86400000), 'yyyy-MM-dd')
       : '',
-    total_amount: 0,
+    total_amount: getLastTotal(),
     notes: '',
   });
-  const [manualTotal, setManualTotal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -84,7 +91,6 @@ export function BookingModal({
           total_amount: editingBooking.total_amount,
           notes: editingBooking.notes || '',
         });
-        setManualTotal(true);
       } else {
         setFormData({
           room_id: selectedRoom?.id || '',
@@ -96,10 +102,9 @@ export function BookingModal({
           check_out: selectedDate
             ? format(new Date(selectedDate.getTime() + 86400000), 'yyyy-MM-dd')
             : '',
-          total_amount: 0,
+          total_amount: getLastTotal(),
           notes: '',
         });
-        setManualTotal(false);
       }
       setError(null);
     }
@@ -113,16 +118,7 @@ export function BookingModal({
       ? Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))
       : 0;
 
-  const calculatedTotal = useMemo(
-    () => (selectedRoomData?.precioPorNoche || 0) * formData.guest_count * Math.max(nights, 0),
-    [selectedRoomData?.precioPorNoche, formData.guest_count, nights]
-  );
-
-  useEffect(() => {
-    if (!manualTotal) {
-      setFormData((f) => ({ ...f, total_amount: calculatedTotal }));
-    }
-  }, [calculatedTotal, manualTotal]);
+  const suggestedTotal = (selectedRoomData?.precioPorNoche || 0) * formData.guest_count * Math.max(nights, 0);
 
   const [nameSuggestions, setNameSuggestions] = useState<Guest[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -209,6 +205,7 @@ export function BookingModal({
     setLoading(false);
 
     if (result.success) {
+      localStorage.setItem(LAST_TOTAL_KEY, String(formData.total_amount));
       onOpenChange(false);
       setFormData({
         room_id: '',
@@ -218,7 +215,7 @@ export function BookingModal({
         guest_count: 1,
         check_in: '',
         check_out: '',
-        total_amount: 0,
+        total_amount: getLastTotal(),
         notes: '',
       });
     } else {
@@ -263,7 +260,7 @@ export function BookingModal({
                     value={room.id}
                     className="text-white hover:bg-zinc-700"
                   >
-                    {room.nombre} - {room.tipo} (${room.precioPorNoche.toLocaleString('es-AR')}/noche)
+                    {room.nombre} - {room.tipo} (${room.precioPorNoche.toLocaleString('es-AR')}/pers/noche)
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -320,52 +317,29 @@ export function BookingModal({
           </div>
 
           {nights > 0 && selectedRoomData && (
-            <div className="rounded-lg bg-zinc-800/50 border border-zinc-700 p-3 space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <Users className="h-4 w-4 text-zinc-500" />
-                <span className="text-zinc-400">
-                  {formData.guest_count} persona{formData.guest_count !== 1 ? 's' : ''} x {nights} noche{nights > 1 ? 's' : ''}
+            <div className="rounded-lg bg-zinc-800/50 border border-zinc-700 p-3 space-y-3">
+              <div className="flex items-center gap-2 text-sm text-zinc-400">
+                <Users className="h-4 w-4 flex-shrink-0" />
+                <span>
+                  {formData.guest_count} pers. × {nights} noche{nights > 1 ? 's' : ''} × ${selectedRoomData.precioPorNoche.toLocaleString('es-AR')}/pers/noche
                 </span>
-                <span className="text-zinc-500">×</span>
-                <span className="text-zinc-300">${selectedRoomData.precioPorNoche.toLocaleString('es-AR')}/pers</span>
+                <span className="text-zinc-500">=</span>
+                <span className="text-white font-medium">${suggestedTotal.toLocaleString('es-AR')}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-zinc-500">Total calculado</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-semibold text-white">
-                    ${formData.total_amount.toLocaleString('es-AR')}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setManualTotal(true)}
-                    className="text-xs text-sky-400 hover:underline"
-                  >
-                    Editar
-                  </button>
-                </div>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="totalAmount" className="text-sm text-zinc-300 whitespace-nowrap">
+                  Total final
+                </Label>
+                <Input
+                  id="totalAmount"
+                  type="number"
+                  value={formData.total_amount || ''}
+                  onChange={(e) =>
+                    setFormData({ ...formData, total_amount: Number(e.target.value) })
+                  }
+                  className="bg-zinc-800 border-zinc-700 text-white"
+                />
               </div>
-              {manualTotal && (
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    value={formData.total_amount}
-                    onChange={(e) =>
-                      setFormData({ ...formData, total_amount: Number(e.target.value) })
-                    }
-                    className="bg-zinc-800 border-zinc-700 text-white text-sm w-full"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setManualTotal(false);
-                      setFormData((f) => ({ ...f, total_amount: calculatedTotal }));
-                    }}
-                    className="text-xs text-emerald-400 hover:underline whitespace-nowrap"
-                  >
-                    Auto
-                  </button>
-                </div>
-              )}
             </div>
           )}
 
