@@ -14,7 +14,6 @@ import {
   AlertTriangle,
   Plus,
   Sparkles,
-  FileDown,
   LogIn,
   LogOut,
   ArrowRight,
@@ -218,17 +217,7 @@ export function ExecutiveDashboard({
               </div>
             </Button>
 
-            <Button
-              variant="outline"
-              disabled
-              className="w-full justify-start gap-3 border-zinc-700 text-zinc-500 h-12 opacity-60"
-            >
-              <FileDown className="h-5 w-5" />
-              <div className="text-left">
-                <div className="text-sm font-medium">Exportar Reporte</div>
-                <div className="text-xs text-zinc-600">Próximamente</div>
-              </div>
-            </Button>
+
           </CardContent>
         </Card>
       </div>

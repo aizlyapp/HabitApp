@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { createClient } from '@/lib/supabase/client';
 import type { Room, Reservation, ReservationInsert, Guest, PaymentStatus } from '@/lib/data/types';
 import { validateDateRange, parseDate } from '@/lib/data/validators';
 import * as repo from '@/lib/data/repository';
@@ -17,19 +18,27 @@ import {
 
 export function useReservations() {
   const queryClient = useQueryClient();
+  const supabase = createClient();
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const roomsQuery = useRoomsQuery();
-  const reservationsQuery = useReservationsQuery();
-  const guestsQuery = useGuestsQuery();
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.id) setUserId(user.id);
+    });
+  }, [supabase]);
 
-  const createReservationMutation = useCreateReservationMutation();
-  const updateReservationMutation = useUpdateReservationMutation();
-  const deleteReservationMutation = useDeleteReservationMutation();
+  const roomsQuery = useRoomsQuery(userId);
+  const reservationsQuery = useReservationsQuery(userId);
+  const guestsQuery = useGuestsQuery(userId);
+
+  const createReservationMutation = useCreateReservationMutation(userId || '');
+  const updateReservationMutation = useUpdateReservationMutation(userId || '');
+  const deleteReservationMutation = useDeleteReservationMutation(userId || '');
 
   const rooms: Room[] = roomsQuery.data ?? [];
   const reservations: Reservation[] = reservationsQuery.data ?? [];
   const guests: Guest[] = guestsQuery.data ?? [];
-  const loading = roomsQuery.isLoading || reservationsQuery.isLoading || guestsQuery.isLoading;
+  const loading = roomsQuery.isLoading || reservationsQuery.isLoading || guestsQuery.isLoading || !userId;
   const error =
     roomsQuery.error instanceof Error
       ? roomsQuery.error.message
@@ -54,13 +63,16 @@ export function useReservations() {
       checkOut: Date,
       excludeReservationId?: string
     ) => {
-      return repo.checkRoomAvailability(roomId, checkIn, checkOut, excludeReservationId);
+      if (!userId) return { available: false, error: 'Usuario no autenticado' };
+      return repo.checkRoomAvailability(userId, roomId, checkIn, checkOut, excludeReservationId);
     },
-    []
+    [userId]
   );
 
   const createReservation = useCallback(
     async (reservation: Omit<ReservationInsert, 'id' | 'created_at'>) => {
+      if (!userId) return { success: false, error: 'Usuario no autenticado' } as const;
+
       const checkIn = parseDate(reservation.check_in);
       const checkOut = parseDate(reservation.check_out);
       const validationError = validateDateRange(checkIn, checkOut);
@@ -91,11 +103,13 @@ export function useReservations() {
         } as const;
       }
     },
-    [isRoomAvailable, rooms, createReservationMutation]
+    [userId, isRoomAvailable, rooms, createReservationMutation]
   );
 
   const updateReservation = useCallback(
     async (id: string, updates: Partial<Reservation>) => {
+      if (!userId) return { success: false, error: 'Usuario no autenticado' } as const;
+
       if (updates.check_in && updates.check_out) {
         const checkIn = parseDate(updates.check_in);
         const checkOut = parseDate(updates.check_out);
@@ -130,11 +144,12 @@ export function useReservations() {
         } as const;
       }
     },
-    [isRoomAvailable, rooms, reservations, updateReservationMutation]
+    [userId, isRoomAvailable, rooms, reservations, updateReservationMutation]
   );
 
   const deleteReservation = useCallback(
     async (id: string) => {
+      if (!userId) return { success: false, error: 'Usuario no autenticado' } as const;
       try {
         await deleteReservationMutation.mutateAsync(id);
         return { success: true } as const;
@@ -145,7 +160,7 @@ export function useReservations() {
         } as const;
       }
     },
-    [deleteReservationMutation]
+    [userId, deleteReservationMutation]
   );
 
   const cancelReservation = useCallback(
@@ -157,6 +172,8 @@ export function useReservations() {
 
   const updateRoomStatus = useCallback(
     async (roomId: string, status: string) => {
+      if (!userId) return { success: false, error: 'Usuario no autenticado' } as const;
+
       const prev = queryClient.getQueryData<Room[]>(queryKeys.rooms);
 
       queryClient.setQueryData<Room[]>(queryKeys.rooms, (old: Room[] | undefined) =>
@@ -166,7 +183,7 @@ export function useReservations() {
       );
 
       try {
-        await repo.updateRoom(roomId, { status } as Partial<Room>);
+        await repo.updateRoom(userId, roomId, { status } as Partial<Room>);
         return { success: true } as const;
       } catch (err) {
         queryClient.setQueryData(queryKeys.rooms, prev);
@@ -176,11 +193,13 @@ export function useReservations() {
         } as const;
       }
     },
-    [queryClient]
+    [userId, queryClient]
   );
 
   const updateCleaningStatus = useCallback(
     async (roomId: string, cleaningStatus: string) => {
+      if (!userId) return { success: false, error: 'Usuario no autenticado' } as const;
+
       const prev = queryClient.getQueryData<Room[]>(queryKeys.rooms);
 
       queryClient.setQueryData<Room[]>(queryKeys.rooms, (old: Room[] | undefined) =>
@@ -194,7 +213,7 @@ export function useReservations() {
       );
 
       try {
-        await repo.updateCleaningStatus(roomId, cleaningStatus);
+        await repo.updateCleaningStatus(userId, roomId, cleaningStatus);
         return { success: true } as const;
       } catch (err) {
         queryClient.setQueryData(queryKeys.rooms, prev);
@@ -204,11 +223,13 @@ export function useReservations() {
         } as const;
       }
     },
-    [queryClient]
+    [userId, queryClient]
   );
 
   const checkIn = useCallback(
     async (reservationId: string) => {
+      if (!userId) return { success: false, error: 'Usuario no autenticado' } as const;
+
       const reservation = reservations.find((r) => r.id === reservationId);
       if (!reservation) {
         return { success: false, error: 'Reserva no encontrada' } as const;
@@ -237,8 +258,8 @@ export function useReservations() {
       );
 
       try {
-        await repo.updateReservation(reservationId, { status: 'checked-in' });
-        await repo.updateRoom(reservation.room_id, {
+        await repo.updateReservation(userId, reservationId, { status: 'checked-in' });
+        await repo.updateRoom(userId, reservation.room_id, {
           status: 'occupied',
         } as Partial<Room>);
         return { success: true } as const;
@@ -251,11 +272,13 @@ export function useReservations() {
         } as const;
       }
     },
-    [reservations, queryClient]
+    [userId, reservations, queryClient]
   );
 
   const checkOut = useCallback(
     async (reservationId: string) => {
+      if (!userId) return { success: false, error: 'Usuario no autenticado' } as const;
+
       const reservation = reservations.find((r) => r.id === reservationId);
       if (!reservation) {
         return { success: false, error: 'Reserva no encontrada' } as const;
@@ -284,11 +307,11 @@ export function useReservations() {
       );
 
       try {
-        await repo.updateReservation(reservationId, { status: 'checked-out' });
-        await repo.updateRoom(reservation.room_id, {
+        await repo.updateReservation(userId, reservationId, { status: 'checked-out' });
+        await repo.updateRoom(userId, reservation.room_id, {
           status: 'available',
         } as Partial<Room>);
-        await repo.updateCleaningStatus(reservation.room_id, 'dirty');
+        await repo.updateCleaningStatus(userId, reservation.room_id, 'dirty');
         return { success: true } as const;
       } catch (err) {
         queryClient.setQueryData(queryKeys.reservations, prevReservations);
@@ -299,11 +322,13 @@ export function useReservations() {
         } as const;
       }
     },
-    [reservations, queryClient]
+    [userId, reservations, queryClient]
   );
 
   const updatePaymentStatus = useCallback(
     async (reservationId: string, paymentStatus: PaymentStatus) => {
+      if (!userId) return { success: false, error: 'Usuario no autenticado' } as const;
+
       const prev = queryClient.getQueryData<Reservation[]>(queryKeys.reservations);
 
       queryClient.setQueryData<Reservation[]>(queryKeys.reservations, (old: Reservation[] | undefined) =>
@@ -315,7 +340,7 @@ export function useReservations() {
       );
 
       try {
-        await repo.updateReservation(reservationId, { payment_status: paymentStatus });
+        await repo.updateReservation(userId, reservationId, { payment_status: paymentStatus });
         return { success: true } as const;
       } catch (err) {
         queryClient.setQueryData(queryKeys.reservations, prev);
@@ -326,7 +351,7 @@ export function useReservations() {
         } as const;
       }
     },
-    [queryClient]
+    [userId, queryClient]
   );
 
   return {

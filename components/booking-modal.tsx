@@ -43,7 +43,7 @@ interface BookingModalProps {
   }) => Promise<{ success: boolean; error?: string; data?: Reservation }>;
 }
 
-const PRICE_PER_PERSON_KEY = 'habitapp_price_per_person';
+const PRICE_PER_PERSON_KEY = 'roomy_price_per_person';
 
 function getSavedPricePerPerson(): number {
   if (typeof window === 'undefined') return 0;

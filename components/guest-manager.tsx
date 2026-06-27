@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -18,7 +18,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import {
   Plus,
   Search,
@@ -31,6 +30,7 @@ import {
   CalendarDays,
   Trash2,
 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 import type { Guest } from '@/lib/data/types';
 import * as repo from '@/lib/data/repository';
 import { useQueryClient } from '@tanstack/react-query';
@@ -59,7 +59,15 @@ function parseCSV(text: string): Omit<Guest, 'id' | 'fechaRegistro'>[] {
 
 export function GuestManager({ guests }: GuestManagerProps) {
   const queryClient = useQueryClient();
+  const supabase = createClient();
+  const [userId, setUserId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.id) setUserId(user.id);
+    });
+  }, [supabase]);
 
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -80,11 +88,11 @@ export function GuestManager({ guests }: GuestManagerProps) {
   }, [guests, search]);
 
   const handleCreate = async () => {
-    if (!form.nombre.trim()) return;
+    if (!userId || !form.nombre.trim()) return;
     setSaving(true);
     setError(null);
     try {
-      const g = await repo.insertGuest(form);
+      const g = await repo.insertGuest(userId, form);
       queryClient.setQueryData<Guest[]>(queryKeys.guests, (old: Guest[] | undefined) =>
         old ? [...old, g] : [g]
       );
@@ -99,7 +107,7 @@ export function GuestManager({ guests }: GuestManagerProps) {
 
   const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!userId || !file) return;
     setImporting(true);
     setImportResult(null);
     try {
@@ -109,7 +117,7 @@ export function GuestManager({ guests }: GuestManagerProps) {
         setImportResult('No se encontraron huéspedes en el archivo.');
         return;
       }
-      const created = await Promise.all(parsed.map((g) => repo.insertGuest(g)));
+      const created = await Promise.all(parsed.map((g) => repo.insertGuest(userId, g)));
       queryClient.setQueryData<Guest[]>(queryKeys.guests, (old: Guest[] | undefined) =>
         old ? [...old, ...created] : created
       );
@@ -202,7 +210,6 @@ export function GuestManager({ guests }: GuestManagerProps) {
                 <TableHead className="text-zinc-400">Email</TableHead>
                 <TableHead className="text-zinc-400">Teléfono</TableHead>
                 <TableHead className="text-zinc-400">Registro</TableHead>
-                <TableHead className="text-zinc-400 text-right">Reservas</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -214,7 +221,7 @@ export function GuestManager({ guests }: GuestManagerProps) {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-zinc-500" />
-                      <span className="font-medium text-white">
+                      <span className="font-medium text-white capitalize">
                         {guest.nombre}
                       </span>
                     </div>
@@ -243,21 +250,12 @@ export function GuestManager({ guests }: GuestManagerProps) {
                         : '—'}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
-                    <Badge
-                      variant="outline"
-                      className="border-zinc-700 text-zinc-400"
-                    >
-                      {/* reservas count could be added later */}
-                      —
-                    </Badge>
-                  </TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={4}
                     className="py-12 text-center text-zinc-500"
                   >
                     {search

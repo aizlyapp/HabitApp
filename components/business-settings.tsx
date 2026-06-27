@@ -20,7 +20,7 @@ import {
   Link,
 } from 'lucide-react';
 import type { BusinessConfig } from '@/lib/data/business-config';
-import { loadConfig, saveConfig, hasPaymentData, qrContent } from '@/lib/data/business-config';
+import { loadConfig, saveConfig, qrContent } from '@/lib/data/business-config';
 
 export function BusinessSettings() {
   const [config, setConfig] = useState<BusinessConfig>(loadConfig);
@@ -250,6 +250,11 @@ export function BusinessSettings() {
                   placeholder="https://mpago.la/..."
                   className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500"
                 />
+                {!config.linkPago && (
+                  <p className="text-xs text-zinc-500">
+                    Creá tu link en mercadopago.com.ar/herramientas/cobrar
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -295,7 +300,7 @@ export function BusinessSettings() {
                 <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-700 p-8 text-center">
                   <QrCode className="h-10 w-10 text-zinc-600" />
                   <p className="text-sm text-zinc-500">
-                    Completá los datos de cobro arriba para generar tu QR
+                    Ingresá un link de pago para generar el QR
                   </p>
                 </div>
               )}
@@ -318,11 +323,21 @@ export function BusinessSettings() {
                     <p className="mt-1 text-[10px] text-zinc-400 break-all">{config.aliasCbuCvu}</p>
                   )}
                   {config.linkPago && (
-                    <p className="mt-1 text-[10px] text-sky-400 break-all">{config.linkPago}</p>
+                    <a
+                      href={config.linkPago}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 text-[10px] text-sky-400 break-all hover:underline"
+                    >
+                      {config.linkPago}
+                    </a>
                   )}
-                  {config.aliasCbuCvu && (
+                  {config.aliasCbuCvu && !config.linkPago && (
+                    <p className="mt-1 text-[10px] text-zinc-400 break-all">{config.aliasCbuCvu}</p>
+                  )}
+                  {qrValue && (
                     <div className="mt-2 flex justify-center">
-                      <QRCodeSVG value={config.aliasCbuCvu} size={60} level="M" />
+                      <QRCodeSVG value={qrValue} size={60} level="M" />
                     </div>
                   )}
                 </div>

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Sidebar } from '@/components/sidebar';
+import { createClient } from '@/lib/supabase/client';
 import { BookingCalendar } from '@/components/booking-calendar';
 import { BookingModal } from '@/components/booking-modal';
 import { BookingDetailDrawer } from '@/components/booking-detail-drawer';
@@ -21,6 +22,8 @@ import { toast } from '@/hooks/use-toast';
 
 function HotelsPMSContent() {
   const queryClient = useQueryClient();
+  const supabase = createClient();
+  const [userId, setUserId] = useState<string | null>(null);
   const [activeView, setActiveView] = useState('calendar');
   const [modalOpen, setModalOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -28,6 +31,12 @@ function HotelsPMSContent() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedBooking, setSelectedBooking] = useState<Reservation | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.id) setUserId(user.id);
+    });
+  }, [supabase]);
 
   const {
     rooms,
@@ -94,9 +103,9 @@ function HotelsPMSContent() {
         (booking.guest_phone && g.telefono === booking.guest_phone)
     );
 
-    if (!guestExists) {
+    if (!guestExists && userId) {
       try {
-        await repo.insertGuest({
+        await repo.insertGuest(userId, {
           nombre: booking.guest_name,
           email: booking.guest_email,
           telefono: booking.guest_phone,

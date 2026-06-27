@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -38,6 +38,7 @@ import {
   Clock,
   AlertCircle,
 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 import type { Room, RoomType, CleaningStatus } from '@/lib/data/types';
 import * as repo from '@/lib/data/repository';
 import { useQueryClient } from '@tanstack/react-query';
@@ -81,11 +82,19 @@ interface RoomManagerProps {
 
 export function RoomManager({ rooms }: RoomManagerProps) {
   const queryClient = useQueryClient();
+  const supabase = createClient();
+  const [userId, setUserId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [form, setForm] = useState<RoomFormData>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.id) setUserId(user.id);
+    });
+  }, [supabase]);
 
   const openCreate = () => {
     setEditingRoom(null);
@@ -109,17 +118,18 @@ export function RoomManager({ rooms }: RoomManagerProps) {
   };
 
   const handleSave = async () => {
+    if (!userId) return;
     setSaving(true);
     setError(null);
 
     try {
       if (editingRoom) {
-        await repo.updateRoom(editingRoom.id, {
+        await repo.updateRoom(userId, editingRoom.id, {
           ...editingRoom,
           ...form,
         });
       } else {
-        await repo.insertRoom(form);
+        await repo.insertRoom(userId, form);
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.rooms });
       setDialogOpen(false);
@@ -131,9 +141,10 @@ export function RoomManager({ rooms }: RoomManagerProps) {
   };
 
   const handleDelete = async (room: Room) => {
+    if (!userId) return;
     if (!confirm(`¿Eliminar habitación ${room.nombre}?`)) return;
     try {
-      await repo.removeRoom(room.id);
+      await repo.removeRoom(userId, room.id);
       queryClient.invalidateQueries({ queryKey: queryKeys.rooms });
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Error al eliminar');
@@ -167,7 +178,6 @@ export function RoomManager({ rooms }: RoomManagerProps) {
                 <TableHead className="text-zinc-400">Tipo</TableHead>
                 <TableHead className="text-zinc-400">Precio/noche</TableHead>
                 <TableHead className="text-zinc-400">Capacidad</TableHead>
-                <TableHead className="text-zinc-400 text-center">Mascotas</TableHead>
                 <TableHead className="text-zinc-400 text-center">Privada</TableHead>
                 <TableHead className="text-zinc-400">Estado</TableHead>
                 <TableHead className="text-zinc-400">Limpieza</TableHead>
@@ -187,11 +197,6 @@ export function RoomManager({ rooms }: RoomManagerProps) {
                     ${room.precioPorNoche.toLocaleString('es-AR')}
                   </TableCell>
                   <TableCell className="text-zinc-300">{room.capacidad} pers.</TableCell>
-                  <TableCell className="text-center">
-                    <span className={room.permiteMascotas ? 'text-emerald-400' : 'text-zinc-600'}>
-                      {room.permiteMascotas ? 'Sí' : 'No'}
-                    </span>
-                  </TableCell>
                   <TableCell className="text-center">
                     <span className={room.esPrivada ? 'text-emerald-400' : 'text-zinc-600'}>
                       {room.esPrivada ? 'Sí' : 'No'}
@@ -244,7 +249,7 @@ export function RoomManager({ rooms }: RoomManagerProps) {
               ))}
               {rooms.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="py-12 text-center text-zinc-500">
+                  <TableCell colSpan={8} className="py-12 text-center text-zinc-500">
                     No hay habitaciones configuradas. Creá la primera.
                   </TableCell>
                 </TableRow>

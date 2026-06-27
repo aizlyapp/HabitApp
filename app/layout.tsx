@@ -6,8 +6,8 @@ import { QueryProvider } from '@/components/query-provider';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'HabitApp - Sistema de Gestión Hotelera',
-  description: 'PMS para hoteles boutique y hostels en Argentina',
+  title: 'Roomy · PMS para Hoteles y Hostels',
+  description: 'Roomy — Sistema de gestión para hoteles boutique y hostels',
 };
 
 export default function RootLayout({

@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import {
   Calendar,
@@ -11,7 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Home,
-  BarChart3,
+  LogOut,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -24,14 +26,20 @@ const navItems = [
   { id: 'calendar', label: 'Reservas', icon: Calendar },
   { id: 'rooms', label: 'Habitaciones', icon: BedDouble },
   { id: 'guests', label: 'Huéspedes', icon: Users },
-  { id: 'reports', label: 'Reportes', icon: BarChart3 },
 ];
 
 const bottomNavItems = [{ id: 'settings', label: 'Configuración', icon: Settings }];
 
 export function Sidebar({ activeView, onViewChange }: SidebarProps) {
+  const router = useRouter();
+  const supabase = createClient();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/auth');
+  };
 
   return (
     <>
@@ -56,7 +64,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
           {!collapsed && (
             <div className="flex items-center gap-2">
               <BedDouble className="h-6 w-6 text-sky-400" />
-              <span className="text-lg font-semibold text-white">HabitApp</span>
+              <span className="text-lg font-semibold text-white">Roomy</span>
             </div>
           )}
           <Button
@@ -123,6 +131,16 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
                 {!collapsed && <span>{item.label}</span>}
               </button>
             ))}
+            <button
+              onClick={handleLogout}
+              className={cn(
+                'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                'text-zinc-500 hover:bg-rose-950/30 hover:text-rose-400 hover:scale-[1.02] active:scale-[0.98]'
+              )}
+            >
+              <LogOut className="h-5 w-5 flex-shrink-0" />
+              {!collapsed && <span>Cerrar sesión</span>}
+            </button>
           </div>
         </nav>
       </aside>

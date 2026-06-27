@@ -10,57 +10,60 @@ export const queryKeys = {
 
 const staleTime = 30_000;
 
-export function useRoomsQuery() {
+export function useRoomsQuery(userId: string | null) {
   return useQuery<Room[]>({
-    queryKey: queryKeys.rooms,
-    queryFn: repo.fetchAllRooms,
+    queryKey: [...queryKeys.rooms, userId],
+    queryFn: () => repo.fetchAllRooms(userId!),
+    enabled: !!userId,
     staleTime,
   });
 }
 
-export function useReservationsQuery() {
+export function useReservationsQuery(userId: string | null) {
   return useQuery<Reservation[]>({
-    queryKey: queryKeys.reservations,
-    queryFn: repo.fetchAllReservations,
+    queryKey: [...queryKeys.reservations, userId],
+    queryFn: () => repo.fetchAllReservations(userId!),
+    enabled: !!userId,
     staleTime,
   });
 }
 
-export function useGuestsQuery() {
+export function useGuestsQuery(userId: string | null) {
   return useQuery<Guest[]>({
-    queryKey: queryKeys.guests,
-    queryFn: repo.fetchAllGuests,
+    queryKey: [...queryKeys.guests, userId],
+    queryFn: () => repo.fetchAllGuests(userId!),
+    enabled: !!userId,
     staleTime,
   });
 }
 
-export function useCreateReservationMutation() {
+export function useCreateReservationMutation(userId: string) {
   const queryClient = useQueryClient();
 
   return useMutation<Reservation, Error, ReservationInsert>({
-    mutationFn: (data) => repo.createReservation(data),
+    mutationFn: (data) => repo.createReservation(userId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.reservations });
     },
   });
 }
 
-export function useUpdateReservationMutation() {
+export function useUpdateReservationMutation(userId: string) {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, { id: string; updates: Partial<Reservation> }>({
-    mutationFn: ({ id, updates }) => repo.updateReservation(id, updates),
+    mutationFn: ({ id, updates }) => repo.updateReservation(userId, id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.reservations });
     },
   });
 }
 
-export function useDeleteReservationMutation() {
+export function useDeleteReservationMutation(userId: string) {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, string>({
-    mutationFn: (id) => repo.deleteReservation(id),
+    mutationFn: (id) => repo.deleteReservation(userId, id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.reservations });
     },

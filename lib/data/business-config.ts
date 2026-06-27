@@ -8,7 +8,7 @@ export interface BusinessConfig {
   linkPago: string;
 }
 
-const STORAGE_KEY = 'habitapp_business_config';
+const STORAGE_KEY = 'roomy_business_config';
 
 export const defaultConfig: BusinessConfig = {
   nombre: '',
@@ -40,19 +40,28 @@ export function hasPaymentData(config: BusinessConfig): boolean {
   return !!(config.aliasCbuCvu || config.linkPago);
 }
 
+function extractCBU(raw: string): string | null {
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 22) return digits;
+  return null;
+}
+
 export function qrContent(config: BusinessConfig, amount?: number): string {
-  const parts: string[] = [];
-  if (config.nombre) parts.push(config.nombre);
-  if (config.titular) parts.push(`Titular: ${config.titular}`);
-  if (config.banco) parts.push(`Banco: ${config.banco}`);
-  if (config.aliasCbuCvu) parts.push(config.aliasCbuCvu);
-  if (amount) parts.push(`Monto: $${amount.toLocaleString('es-AR')}`);
   if (config.linkPago) {
-    if (amount) {
-      parts.push(`${config.linkPago}${config.linkPago.includes('?') ? '&' : '?'}amount=${amount}`);
-    } else {
-      parts.push(config.linkPago);
+    const url = config.linkPago.trim();
+    if (amount && !url.includes('amount')) {
+      const separator = url.includes('?') ? '&' : '?';
+      return `${url}${separator}amount=${amount}`;
+    }
+    return url;
+  }
+
+  if (config.aliasCbuCvu) {
+    const cbu = extractCBU(config.aliasCbuCvu);
+    if (cbu) {
+      return `https://debin.com.ar/pagar/${cbu}`;
     }
   }
-  return parts.join('\n');
+
+  return '';
 }
