@@ -50,8 +50,5 @@ export function qrContent(config: BusinessConfig, amount?: number): string {
     return link;
   }
 
-  const raw = config.aliasCbuCvu?.trim();
-  if (!raw) return '';
-
-  return raw;
+  return '';
 }

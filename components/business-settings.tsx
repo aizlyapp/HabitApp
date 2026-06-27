@@ -288,10 +288,6 @@ export function BusinessSettings() {
                     />
                   </div>
 
-                  <p className="text-center text-[10px] text-zinc-600 break-all px-2">
-                    {qrValue}
-                  </p>
-
                   <Button
                     onClick={handleDownloadQR}
                     className="w-full gap-2 bg-zinc-700 text-white hover:bg-zinc-600"
@@ -304,7 +300,7 @@ export function BusinessSettings() {
                 <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-700 p-8 text-center">
                   <QrCode className="h-10 w-10 text-zinc-600" />
                   <p className="text-sm text-zinc-500">
-                    Ingresá un link de pago para generar el QR
+                    Ingresá el link de Mercado Pago arriba
                   </p>
                 </div>
               )}
