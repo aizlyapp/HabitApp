@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format, addDays } from 'date-fns';
-import { es } from 'date-fns/locale';
 import {
   Dialog,
   DialogContent,
@@ -66,6 +65,10 @@ export function BookingModal({
   editingBooking,
   onSubmit,
 }: BookingModalProps) {
+  const defaultCheckOut = selectedDate
+    ? format(addDays(selectedDate, 1), 'yyyy-MM-dd')
+    : '';
+
   const [formData, setFormData] = useState({
     room_id: selectedRoom?.id || '',
     guest_name: '',
@@ -74,15 +77,24 @@ export function BookingModal({
     price_per_person: getSavedPricePerPerson(),
     guest_count: 1,
     check_in: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '',
+    check_out: defaultCheckOut,
     nights: 1,
     notes: '',
   });
 
-  const checkOutDate = useMemo(() => {
-    if (!formData.check_in) return '';
-    const d = addDays(new Date(formData.check_in), formData.nights);
-    return format(d, 'yyyy-MM-dd');
-  }, [formData.check_in, formData.nights]);
+  const recalcFromCheckOut = (checkIn: string, checkOut: string) => {
+    if (!checkIn || !checkOut) return { check_out: checkOut, nights: 1 };
+    const diff = Math.ceil(
+      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)
+    );
+    return { check_out: checkOut, nights: Math.max(1, diff) };
+  };
+
+  const recalcFromNights = (checkIn: string, nights: number) => {
+    if (!checkIn) return { check_out: '', nights };
+    const d = addDays(new Date(checkIn), nights);
+    return { check_out: format(d, 'yyyy-MM-dd'), nights };
+  };
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -105,11 +117,13 @@ export function BookingModal({
           price_per_person: ppp,
           guest_count: gc,
           check_in: editingBooking.check_in,
+          check_out: editingBooking.check_out,
           nights: n,
           notes: editingBooking.notes || '',
         });
       } else {
         const saved = getSavedPricePerPerson();
+        const ci = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
         setFormData({
           room_id: selectedRoom?.id || '',
           guest_name: '',
@@ -117,7 +131,8 @@ export function BookingModal({
           guest_phone: '+54 ',
           price_per_person: saved,
           guest_count: 1,
-          check_in: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '',
+          check_in: ci,
+          check_out: ci ? format(addDays(new Date(ci), 1), 'yyyy-MM-dd') : '',
           nights: 1,
           notes: '',
         });
@@ -187,11 +202,11 @@ export function BookingModal({
       setError('El nombre del huésped es obligatorio');
       return;
     }
-    if (!formData.check_in || !checkOutDate) {
+    if (!formData.check_in || !formData.check_out) {
       setError('Las fechas de entrada y salida son obligatorias');
       return;
     }
-    if (checkOutDate <= formData.check_in) {
+    if (formData.check_out <= formData.check_in) {
       setError('La fecha de salida debe ser posterior a la de entrada');
       return;
     }
@@ -205,7 +220,7 @@ export function BookingModal({
       guest_phone: formData.guest_phone.trim(),
       guest_count: formData.guest_count,
       check_in: formData.check_in,
-      check_out: checkOutDate,
+      check_out: formData.check_out,
       total_amount: totalAmount,
       notes: formData.notes || undefined,
     });
@@ -222,6 +237,7 @@ export function BookingModal({
         price_per_person: getSavedPricePerPerson(),
         guest_count: 1,
         check_in: '',
+        check_out: '',
         nights: 1,
         notes: '',
       });
@@ -274,15 +290,17 @@ export function BookingModal({
             </Select>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-5 gap-2">
             <div className="col-span-2">
               <label className="text-xs text-zinc-500 block mb-1">Entrada</label>
               <Input
                 type="date"
                 value={formData.check_in}
-                onChange={(e) =>
-                  setFormData({ ...formData, check_in: e.target.value })
-                }
+                onChange={(e) => {
+                  const ci = e.target.value;
+                  const upd = recalcFromNights(ci, formData.nights);
+                  setFormData({ ...formData, check_in: ci, ...upd });
+                }}
                 className="bg-zinc-800 border-zinc-700 text-white h-9 text-sm"
               />
             </div>
@@ -291,12 +309,11 @@ export function BookingModal({
               <div className="flex items-center border border-zinc-700 rounded-md bg-zinc-800">
                 <button
                   type="button"
-                  onClick={() =>
-                    setFormData((f) => ({
-                      ...f,
-                      nights: Math.max(1, f.nights - 1),
-                    }))
-                  }
+                  onClick={() => {
+                    const n = Math.max(1, formData.nights - 1);
+                    const upd = recalcFromNights(formData.check_in, n);
+                    setFormData({ ...formData, ...upd });
+                  }}
                   className="px-2 h-9 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
                 >
                   -
@@ -306,21 +323,31 @@ export function BookingModal({
                 </span>
                 <button
                   type="button"
-                  onClick={() =>
-                    setFormData((f) => ({ ...f, nights: f.nights + 1 }))
-                  }
+                  onClick={() => {
+                    const n = formData.nights + 1;
+                    const upd = recalcFromNights(formData.check_in, n);
+                    setFormData({ ...formData, ...upd });
+                  }}
                   className="px-2 h-9 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
                 >
                   +
                 </button>
               </div>
             </div>
+            <div className="col-span-2">
+              <label className="text-xs text-zinc-500 block mb-1">Salida</label>
+              <Input
+                type="date"
+                value={formData.check_out}
+                onChange={(e) => {
+                  const co = e.target.value;
+                  const upd = recalcFromCheckOut(formData.check_in, co);
+                  setFormData({ ...formData, ...upd });
+                }}
+                className="bg-zinc-800 border-zinc-700 text-white h-9 text-sm"
+              />
+            </div>
           </div>
-          {checkOutDate && (
-            <p className="text-xs text-zinc-500 -mt-2">
-              Salida: {format(new Date(checkOutDate), "d 'de' MMM", { locale: es })} ({checkOutDate})
-            </p>
-          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
