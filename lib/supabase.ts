@@ -1,27 +1,6 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
-let client: SupabaseClient | null = null;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://hnrujkbvpltffetvmsbn.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhucnVqa2J2cGx0ZmZldHZtc2JuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1MDcwMTcsImV4cCI6MjA5ODA4MzAxN30.mzDuHz7Bfe_W0YjF3luOM0CxaK-q686sl2w16RDHQes';
 
-function getClient(): SupabaseClient {
-  if (!client) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error(
-        'Supabase no configurado. Asegurate de haber puesto ' +
-        'NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY ' +
-        'en Environment Variables de Vercel.'
-      );
-    }
-
-    client = createClient(supabaseUrl, supabaseAnonKey);
-  }
-  return client;
-}
-
-export const supabase = new Proxy({} as SupabaseClient, {
-  get(_, prop) {
-    return getClient()[prop as keyof SupabaseClient];
-  },
-});
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
