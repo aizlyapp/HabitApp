@@ -43,6 +43,18 @@ interface BookingModalProps {
   }) => Promise<{ success: boolean; error?: string; data?: Reservation }>;
 }
 
+const PRICE_PER_PERSON_KEY = 'habitapp_price_per_person';
+
+function getSavedPricePerPerson(): number {
+  if (typeof window === 'undefined') return 0;
+  const saved = localStorage.getItem(PRICE_PER_PERSON_KEY);
+  return saved ? Number(saved) : 0;
+}
+
+function savePricePerPerson(price: number) {
+  localStorage.setItem(PRICE_PER_PERSON_KEY, String(price));
+}
+
 export function BookingModal({
   open,
   onOpenChange,
@@ -53,14 +65,6 @@ export function BookingModal({
   editingBooking,
   onSubmit,
 }: BookingModalProps) {
-  const LAST_TOTAL_KEY = 'habitapp_last_total';
-
-  const getLastTotal = () => {
-    if (typeof window === 'undefined') return 0;
-    const saved = localStorage.getItem(LAST_TOTAL_KEY);
-    return saved ? Number(saved) : 0;
-  };
-
   const [formData, setFormData] = useState({
     room_id: selectedRoom?.id || '',
     guest_name: '',
@@ -71,7 +75,7 @@ export function BookingModal({
     check_out: selectedDate
       ? format(new Date(selectedDate.getTime() + 86400000), 'yyyy-MM-dd')
       : '',
-    total_amount: getLastTotal(),
+    total_amount: getSavedPricePerPerson(),
     notes: '',
   });
   const [loading, setLoading] = useState(false);
@@ -80,18 +84,20 @@ export function BookingModal({
   useEffect(() => {
     if (open) {
       if (editingBooking) {
+        const gc = editingBooking.guest_count || 1;
         setFormData({
           room_id: editingBooking.room_id,
           guest_name: editingBooking.guest_name,
           guest_email: editingBooking.guest_email,
           guest_phone: editingBooking.guest_phone,
-          guest_count: editingBooking.guest_count || 1,
+          guest_count: gc,
           check_in: editingBooking.check_in,
           check_out: editingBooking.check_out,
           total_amount: editingBooking.total_amount,
           notes: editingBooking.notes || '',
         });
       } else {
+        const saved = getSavedPricePerPerson();
         setFormData({
           room_id: selectedRoom?.id || '',
           guest_name: '',
@@ -102,7 +108,7 @@ export function BookingModal({
           check_out: selectedDate
             ? format(new Date(selectedDate.getTime() + 86400000), 'yyyy-MM-dd')
             : '',
-          total_amount: getLastTotal(),
+          total_amount: saved,
           notes: '',
         });
       }
@@ -111,14 +117,9 @@ export function BookingModal({
   }, [open, editingBooking, selectedRoom, selectedDate]);
 
   const selectedRoomData = rooms.find((r) => r.id === formData.room_id);
-  const checkIn = formData.check_in ? new Date(formData.check_in) : null;
-  const checkOut = formData.check_out ? new Date(formData.check_out) : null;
-  const nights =
-    checkIn && checkOut
-      ? Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))
-      : 0;
 
-  const suggestedTotal = (selectedRoomData?.precioPorNoche || 0) * formData.guest_count * Math.max(nights, 0);
+  const pricePerPerson =
+    formData.guest_count > 0 ? formData.total_amount / formData.guest_count : 0;
 
   const [nameSuggestions, setNameSuggestions] = useState<Guest[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -205,7 +206,7 @@ export function BookingModal({
     setLoading(false);
 
     if (result.success) {
-      localStorage.setItem(LAST_TOTAL_KEY, String(formData.total_amount));
+      savePricePerPerson(pricePerPerson);
       onOpenChange(false);
       setFormData({
         room_id: '',
@@ -215,7 +216,7 @@ export function BookingModal({
         guest_count: 1,
         check_in: '',
         check_out: '',
-        total_amount: getLastTotal(),
+        total_amount: getSavedPricePerPerson(),
         notes: '',
       });
     } else {
@@ -260,7 +261,7 @@ export function BookingModal({
                     value={room.id}
                     className="text-white hover:bg-zinc-700"
                   >
-                    {room.nombre} - {room.tipo} (${room.precioPorNoche.toLocaleString('es-AR')}/pers/noche)
+                    {room.nombre} - {room.tipo}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -309,39 +310,41 @@ export function BookingModal({
               max={selectedRoomData?.capacidad || 20}
               value={formData.guest_count}
               onChange={(e) => {
-                const val = Math.max(1, parseInt(e.target.value) || 1);
-                setFormData({ ...formData, guest_count: val });
+                const newCount = Math.max(1, parseInt(e.target.value) || 1);
+                const perPerson = formData.guest_count > 0
+                  ? formData.total_amount / formData.guest_count
+                  : 0;
+                setFormData({
+                  ...formData,
+                  guest_count: newCount,
+                  total_amount: Math.round(perPerson * newCount),
+                });
               }}
               className="bg-zinc-800 border-zinc-700 text-white"
             />
           </div>
 
-          {nights > 0 && selectedRoomData && (
-            <div className="rounded-lg bg-zinc-800/50 border border-zinc-700 p-3 space-y-3">
-              <div className="flex items-center gap-2 text-sm text-zinc-400">
-                <Users className="h-4 w-4 flex-shrink-0" />
-                <span>
-                  {formData.guest_count} pers. × {nights} noche{nights > 1 ? 's' : ''} × ${selectedRoomData.precioPorNoche.toLocaleString('es-AR')}/pers/noche
-                </span>
-                <span className="text-zinc-500">=</span>
-                <span className="text-white font-medium">${suggestedTotal.toLocaleString('es-AR')}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="totalAmount" className="text-sm text-zinc-300 whitespace-nowrap">
-                  Total final
-                </Label>
-                <Input
-                  id="totalAmount"
-                  type="number"
-                  value={formData.total_amount || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, total_amount: Number(e.target.value) })
+          <div>
+            <Label htmlFor="totalAmount" className="text-zinc-300">
+              Total (por las {formData.guest_count} personas)
+            </Label>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-zinc-500 text-lg">$</span>
+              <Input
+                id="totalAmount"
+                type="number"
+                value={formData.total_amount || ''}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setFormData({ ...formData, total_amount: val });
+                  if (formData.guest_count > 0) {
+                    savePricePerPerson(Math.round(val / formData.guest_count));
                   }
-                  className="bg-zinc-800 border-zinc-700 text-white"
-                />
-              </div>
+                }}
+                className="bg-zinc-800 border-zinc-700 text-white text-lg"
+              />
             </div>
-          )}
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="guestName" className="text-zinc-300">
