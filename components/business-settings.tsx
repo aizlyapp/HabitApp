@@ -288,6 +288,10 @@ export function BusinessSettings() {
                     />
                   </div>
 
+                  <p className="text-center text-[10px] text-zinc-600 break-all px-2">
+                    {qrValue}
+                  </p>
+
                   <Button
                     onClick={handleDownloadQR}
                     className="w-full gap-2 bg-zinc-700 text-white hover:bg-zinc-600"
