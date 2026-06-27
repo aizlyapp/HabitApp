@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { format } from 'date-fns';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { format, addDays } from 'date-fns';
+import { es } from 'date-fns/locale';
 import {
   Dialog,
   DialogContent,
@@ -73,11 +74,15 @@ export function BookingModal({
     price_per_person: getSavedPricePerPerson(),
     guest_count: 1,
     check_in: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '',
-    check_out: selectedDate
-      ? format(new Date(selectedDate.getTime() + 86400000), 'yyyy-MM-dd')
-      : '',
+    nights: 1,
     notes: '',
   });
+
+  const checkOutDate = useMemo(() => {
+    if (!formData.check_in) return '';
+    const d = addDays(new Date(formData.check_in), formData.nights);
+    return format(d, 'yyyy-MM-dd');
+  }, [formData.check_in, formData.nights]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -88,6 +93,10 @@ export function BookingModal({
       if (editingBooking) {
         const gc = editingBooking.guest_count || 1;
         const ppp = gc > 0 ? Math.round(editingBooking.total_amount / gc) : editingBooking.total_amount;
+        const n = Math.max(1, Math.ceil(
+          (new Date(editingBooking.check_out).getTime() - new Date(editingBooking.check_in).getTime()) /
+            (1000 * 60 * 60 * 24)
+        ));
         setFormData({
           room_id: editingBooking.room_id,
           guest_name: editingBooking.guest_name,
@@ -96,7 +105,7 @@ export function BookingModal({
           price_per_person: ppp,
           guest_count: gc,
           check_in: editingBooking.check_in,
-          check_out: editingBooking.check_out,
+          nights: n,
           notes: editingBooking.notes || '',
         });
       } else {
@@ -109,9 +118,7 @@ export function BookingModal({
           price_per_person: saved,
           guest_count: 1,
           check_in: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '',
-          check_out: selectedDate
-            ? format(new Date(selectedDate.getTime() + 86400000), 'yyyy-MM-dd')
-            : '',
+          nights: 1,
           notes: '',
         });
       }
@@ -180,11 +187,11 @@ export function BookingModal({
       setError('El nombre del huésped es obligatorio');
       return;
     }
-    if (!formData.check_in || !formData.check_out) {
+    if (!formData.check_in || !checkOutDate) {
       setError('Las fechas de entrada y salida son obligatorias');
       return;
     }
-    if (formData.check_out <= formData.check_in) {
+    if (checkOutDate <= formData.check_in) {
       setError('La fecha de salida debe ser posterior a la de entrada');
       return;
     }
@@ -198,7 +205,7 @@ export function BookingModal({
       guest_phone: formData.guest_phone.trim(),
       guest_count: formData.guest_count,
       check_in: formData.check_in,
-      check_out: formData.check_out,
+      check_out: checkOutDate,
       total_amount: totalAmount,
       notes: formData.notes || undefined,
     });
@@ -215,7 +222,7 @@ export function BookingModal({
         price_per_person: getSavedPricePerPerson(),
         guest_count: 1,
         check_in: '',
-        check_out: '',
+        nights: 1,
         notes: '',
       });
     } else {
@@ -267,36 +274,53 @@ export function BookingModal({
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="checkIn" className="text-zinc-300">
-                Entrada
-              </Label>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="col-span-2">
+              <label className="text-xs text-zinc-500 block mb-1">Entrada</label>
               <Input
-                id="checkIn"
                 type="date"
                 value={formData.check_in}
                 onChange={(e) =>
                   setFormData({ ...formData, check_in: e.target.value })
                 }
-                className="bg-zinc-800 border-zinc-700 text-white"
+                className="bg-zinc-800 border-zinc-700 text-white h-9 text-sm"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="checkOut" className="text-zinc-300">
-                Salida
-              </Label>
-              <Input
-                id="checkOut"
-                type="date"
-                value={formData.check_out}
-                onChange={(e) =>
-                  setFormData({ ...formData, check_out: e.target.value })
-                }
-                className="bg-zinc-800 border-zinc-700 text-white"
-              />
+            <div>
+              <label className="text-xs text-zinc-500 block mb-1">Noches</label>
+              <div className="flex items-center border border-zinc-700 rounded-md bg-zinc-800">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData((f) => ({
+                      ...f,
+                      nights: Math.max(1, f.nights - 1),
+                    }))
+                  }
+                  className="px-2 h-9 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
+                >
+                  -
+                </button>
+                <span className="flex-1 text-center text-white text-sm tabular-nums">
+                  {formData.nights}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData((f) => ({ ...f, nights: f.nights + 1 }))
+                  }
+                  className="px-2 h-9 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
+                >
+                  +
+                </button>
+              </div>
             </div>
           </div>
+          {checkOutDate && (
+            <p className="text-xs text-zinc-500 -mt-2">
+              Salida: {format(new Date(checkOutDate), "d 'de' MMM", { locale: es })} ({checkOutDate})
+            </p>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
