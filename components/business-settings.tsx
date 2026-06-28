@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import {
   Store,
   MapPin,
@@ -18,6 +19,9 @@ import {
   Check,
   CreditCard,
   Link,
+  Bot,
+  MessageCircle,
+  RefreshCw,
 } from 'lucide-react';
 import type { BusinessConfig } from '@/lib/data/business-config';
 import { loadConfig, saveConfig, qrContent } from '@/lib/data/business-config';
@@ -255,6 +259,126 @@ export function BusinessSettings() {
                     Creá tu link en mercadopago.com.ar/herramientas/cobrar
                   </p>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Chatbot de WhatsApp */}
+          <Card className="border-zinc-800 bg-zinc-900">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm font-medium text-zinc-300">
+                <MessageCircle className="h-4 w-4 text-emerald-400" />
+                Chatbot de WhatsApp
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950 p-3">
+                <div>
+                  <p className="text-sm font-medium text-white">Activar chatbot</p>
+                  <p className="text-xs text-zinc-500">
+                    {config.botEnabled
+                      ? 'Los mensajes entrantes serán respondidos automáticamente'
+                      : 'El chatbot ignorará todos los mensajes'}
+                  </p>
+                </div>
+                <Switch
+                  checked={config.botEnabled}
+                  onCheckedChange={(checked) => update('botEnabled', checked)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="whatsappApiToken" className="text-zinc-300">
+                  WhatsApp API Token
+                </Label>
+                <Input
+                  id="whatsappApiToken"
+                  type="password"
+                  value={config.whatsappApiToken}
+                  onChange={(e) => update('whatsappApiToken', e.target.value)}
+                  placeholder="EAAT..."
+                  className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="whatsappPhoneId" className="text-zinc-300">
+                  Phone Number ID
+                </Label>
+                <Input
+                  id="whatsappPhoneId"
+                  value={config.whatsappPhoneId}
+                  onChange={(e) => update('whatsappPhoneId', e.target.value)}
+                  placeholder="123456789..."
+                  className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="whatsappVerifyToken" className="text-zinc-300">
+                  Verify Token
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="whatsappVerifyToken"
+                    value={config.whatsappVerifyToken}
+                    onChange={(e) => update('whatsappVerifyToken', e.target.value)}
+                    placeholder="Token de verificación del webhook"
+                    className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500 font-mono text-xs"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                    onClick={() => {
+                      update('whatsappVerifyToken', crypto.randomUUID());
+                    }}
+                    title="Generar nuevo token"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="botPersonality" className="text-zinc-300">
+                  Personalidad del bot
+                </Label>
+                <Textarea
+                  id="botPersonality"
+                  value={config.botPersonality}
+                  onChange={(e) => update('botPersonality', e.target.value)}
+                  placeholder="Ej: Somos un hostel familiar y relajado. Tenemos desayuno incluido los fines de semana."
+                  className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500 resize-none"
+                  rows={3}
+                />
+              </div>
+
+              <Separator className="bg-zinc-800" />
+
+              <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-3 space-y-2">
+                <p className="text-xs font-medium text-zinc-400 flex items-center gap-1">
+                  <Bot className="h-3 w-3" />
+                  Configuración en Meta
+                </p>
+                <ol className="text-[11px] text-zinc-500 space-y-1 list-decimal list-inside">
+                  <li>Entrá a developers.facebook.com</li>
+                  <li>Creá una app de tipo Business</li>
+                  <li>Agregá el producto WhatsApp</li>
+                  <li>
+                    En Webhooks, pegá esta URL:{' '}
+                    <code className="text-zinc-300 break-all">
+                      https://aizlyhabitapp.vercel.app/api/webhook/whatsapp
+                    </code>
+                  </li>
+                  <li>
+                    En Verify Token, pegá el token de arriba
+                  </li>
+                  <li>
+                    Copiá el Token de acceso y el Phone Number ID
+                  </li>
+                </ol>
               </div>
             </CardContent>
           </Card>
