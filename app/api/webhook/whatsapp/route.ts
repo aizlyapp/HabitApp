@@ -122,36 +122,20 @@ function insertReservation(userId: string, data: Record<string, string>, supabas
 }
 
 export async function GET(request: NextRequest) {
-  try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+  const searchParams = request.nextUrl.searchParams;
+  const mode = searchParams.get('hub.mode');
+  const token = searchParams.get('hub.verify_token');
+  const challenge = searchParams.get('hub.challenge');
 
-    const searchParams = request.nextUrl.searchParams;
-    const mode = searchParams.get('hub.mode');
-    const token = searchParams.get('hub.verify_token');
-    const challenge = searchParams.get('hub.challenge');
-
-    if (!mode || !token || !challenge) {
-      return new NextResponse('Missing parameters', { status: 403 });
-    }
-
-    const { data } = await supabase
-      .from('business_config')
-      .select('id')
-      .eq('whatsapp_verify_token', token)
-      .single();
-
-    if (!data) {
-      return new NextResponse('Invalid verify token', { status: 403 });
-    }
-
-    return new NextResponse(challenge, { status: 200 });
-  } catch (err) {
-    console.error('Webhook GET error:', err);
-    return new NextResponse('Internal error', { status: 500 });
+  if (!mode || !token || !challenge) {
+    return new NextResponse('Missing parameters', { status: 403 });
   }
+
+  if (mode !== 'subscribe' || token !== 'Boca el unico grande') {
+    return new NextResponse('Invalid verify token', { status: 403 });
+  }
+
+  return new NextResponse(challenge, { status: 200 });
 }
 
 export async function POST(request: NextRequest) {
