@@ -158,7 +158,7 @@ export function BusinessSettings() {
   const qrValue = qrContent(config);
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-auto p-4 lg:p-6">
+    <div className="flex flex-col gap-6 p-4 lg:p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -182,9 +182,8 @@ export function BusinessSettings() {
         </Button>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-5">
-        {/* Form */}
-        <div className="space-y-6 lg:col-span-3">
+      <div className="flex flex-col gap-6">
+        <div className="space-y-6">
           {/* Datos del Negocio */}
           <Card className="border-zinc-800 bg-zinc-900">
             <CardHeader>
@@ -401,8 +400,8 @@ export function BusinessSettings() {
         </div>
 
         {/* QR Panel */}
-        <div className="lg:col-span-2">
-          <Card className="border-zinc-800 bg-zinc-900 sticky top-4">
+        <div>
+          <Card className="border-zinc-800 bg-zinc-900">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm font-medium text-zinc-300">
                 <QrCode className="h-4 w-4 text-sky-400" />
