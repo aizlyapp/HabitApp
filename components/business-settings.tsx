@@ -81,25 +81,62 @@ export function BusinessSettings() {
       const padding = 40;
       ctx.drawImage(img, padding, padding, size - padding * 2, size - padding * 2);
 
-      if (config.nombre) {
+      let y = size - 12;
+
+      if (config.logo) {
+        const logoImg = new Image();
+        logoImg.onload = () => {
+          const logoMaxH = 48;
+          const logoW = logoImg.width * (logoMaxH / logoImg.height);
+          const logoX = (size - logoW) / 2;
+          const logoY = y - logoMaxH - 8;
+          ctx.drawImage(logoImg, logoX, logoY, logoW, logoMaxH);
+
+          if (config.nombre) {
+            ctx.fillStyle = '#1a1a1a';
+            ctx.font = 'bold 22px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(config.nombre, size / 2, logoY - 8);
+          }
+
+          canvas.toBlob((blob) => {
+            if (!blob) return;
+            const link = document.createElement('a');
+            link.download = `qr-${config.nombre || 'hostel'}.png`;
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+          }, 'image/png');
+        };
+        logoImg.src = config.logo;
+      } else if (config.nombre) {
         ctx.fillStyle = '#1a1a1a';
         ctx.font = 'bold 22px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(config.nombre, size / 2, size - 12);
-      }
+        ctx.fillText(config.nombre, size / 2, y);
 
-      canvas.toBlob((blob) => {
-        if (!blob) return;
-        const link = document.createElement('a');
-        link.download = `qr-${config.nombre || 'hostel'}.png`;
-        link.href = URL.createObjectURL(blob);
-        link.click();
-        URL.revokeObjectURL(link.href);
-      }, 'image/png');
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          const link = document.createElement('a');
+          link.download = `qr-${config.nombre || 'hostel'}.png`;
+          link.href = URL.createObjectURL(blob);
+          link.click();
+          URL.revokeObjectURL(link.href);
+        }, 'image/png');
+      } else {
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          const link = document.createElement('a');
+          link.download = `qr-${config.nombre || 'hostel'}.png`;
+          link.href = URL.createObjectURL(blob);
+          link.click();
+          URL.revokeObjectURL(link.href);
+        }, 'image/png');
+      }
       URL.revokeObjectURL(url);
     };
     img.src = url;
-  }, [config.nombre]);
+  }, [config.nombre, config.logo]);
 
   const qrValue = qrContent(config);
 
@@ -434,6 +471,15 @@ export function BusinessSettings() {
               <div className="space-y-2">
                 <p className="text-xs font-medium text-zinc-400">Vista previa del comprobante</p>
                 <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-3">
+                  {config.logo && (
+                    <div className="flex justify-center mb-2">
+                      <img
+                        src={config.logo}
+                        alt="logo"
+                        className="h-16 w-auto max-h-16 object-contain"
+                      />
+                    </div>
+                  )}
                   {config.nombre && (
                     <p className="text-xs font-semibold text-white">{config.nombre}</p>
                   )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
@@ -15,6 +15,8 @@ import {
   Home,
   LogOut,
 } from 'lucide-react';
+import { loadConfigFromDB } from '@/lib/data/business-config-db';
+import type { BusinessConfig } from '@/lib/data/business-config';
 
 interface SidebarProps {
   activeView: string;
@@ -35,6 +37,15 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   const supabase = createClient();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [businessConfig, setBusinessConfig] = useState<Partial<BusinessConfig>>({});
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.id) {
+        loadConfigFromDB(user.id).then(setBusinessConfig);
+      }
+    });
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -62,9 +73,24 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
         {/* Logo */}
         <div className="flex h-16 items-center justify-between border-b border-zinc-800 px-4">
           {!collapsed && (
-            <div className="flex items-center gap-2">
-              <BedDouble className="h-6 w-6 text-sky-400" />
-              <span className="text-lg font-semibold text-white">Roomy</span>
+            <div className="flex items-center gap-2 min-w-0">
+              {businessConfig.logo ? (
+                <>
+                  <img
+                    src={businessConfig.logo}
+                    alt="logo"
+                    className="h-8 w-auto max-h-8 object-contain rounded shrink-0"
+                  />
+                  <span className="text-lg font-semibold text-white truncate">
+                    {businessConfig.nombre || 'Roomy'}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <BedDouble className="h-6 w-6 text-sky-400 shrink-0" />
+                  <span className="text-lg font-semibold text-white">Roomy</span>
+                </>
+              )}
             </div>
           )}
           <Button

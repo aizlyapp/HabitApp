@@ -17,6 +17,9 @@ export async function loadConfigFromDB(userId: string): Promise<Partial<Business
 
   return {
     nombre: data.nombre || '',
+    titular: data.titular || '',
+    banco: data.banco || '',
+    logo: data.logo || '',
     whatsappApiToken: data.whatsapp_api_token || '',
     whatsappPhoneId: data.whatsapp_phone_id || '',
     whatsappVerifyToken: data.whatsapp_verify_token || '',
@@ -40,6 +43,9 @@ export async function saveConfigToDB(userId: string, config: Partial<BusinessCon
   if ('linkPago' in config) dbData.link_pago = config.linkPago;
   if ('direccion' in config) dbData.direccion = config.direccion;
   if ('nombre' in config) dbData.nombre = config.nombre;
+  if ('titular' in config) dbData.titular = config.titular;
+  if ('banco' in config) dbData.banco = config.banco;
+  if ('logo' in config) dbData.logo = config.logo;
 
   const { data: existing } = await supabase
     .from('business_config')

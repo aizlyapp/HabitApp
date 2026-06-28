@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { format, isToday, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -19,6 +19,9 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import type { Room, Reservation } from '@/lib/data/types';
+import { createClient } from '@/lib/supabase/client';
+import { loadConfigFromDB } from '@/lib/data/business-config-db';
+import type { BusinessConfig } from '@/lib/data/business-config';
 
 const OccupationChart = dynamic(
   () => import('@/components/occupation-chart').then((m) => m.OccupationChart),
@@ -40,6 +43,17 @@ export function ExecutiveDashboard({
   onBookingClick,
   onViewDirtyRooms,
 }: ExecutiveDashboardProps) {
+  const supabase = createClient();
+  const [businessConfig, setBusinessConfig] = useState<Partial<BusinessConfig>>({});
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.id) {
+        loadConfigFromDB(user.id).then(setBusinessConfig);
+      }
+    });
+  }, []);
+
   const today = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -108,6 +122,20 @@ export function ExecutiveDashboard({
 
   return (
     <div className="flex h-full flex-col gap-6 overflow-auto p-4 lg:p-6">
+      {/* Business header */}
+      {businessConfig.logo && (
+        <div className="flex items-center gap-3">
+          <img
+            src={businessConfig.logo}
+            alt="logo"
+            className="h-10 w-auto max-h-10 object-contain rounded"
+          />
+          {businessConfig.nombre && (
+            <h1 className="text-2xl font-semibold text-white">{businessConfig.nombre}</h1>
+          )}
+        </div>
+      )}
+
       {/* KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-zinc-800 bg-zinc-900 transition-all duration-200 hover:scale-[1.02] hover:border-zinc-700">
