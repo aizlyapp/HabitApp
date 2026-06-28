@@ -164,14 +164,14 @@ export async function POST(request: NextRequest) {
     body = JSON.parse(rawBody);
   } catch (parseErr) {
     console.error('Webhook POST parse error:', parseErr, 'rawBody:', rawBody);
-    return NextResponse.json({ status: 'error', message: 'Evento Recibido' });
+    return NextResponse.json({ status: 'error', message: 'Evento Recibido' }, { status: 200 });
   }
 
   await processWhatsAppMessage(body).catch((err) => {
     console.error('WhatsApp processing error:', err);
   });
 
-  return NextResponse.json({ status: 'ok', message: 'Evento Recibido' });
+  return NextResponse.json({ status: 'ok', message: 'Evento Recibido' }, { status: 200 });
 }
 
 async function processWhatsAppMessage(body: any) {
@@ -195,6 +195,9 @@ async function processWhatsAppMessage(body: any) {
 
   const phoneNumberId = value.metadata?.phone_number_id;
   const message = value.messages?.[0];
+  const messageId = message?.id;
+  console.log('🔍 phoneNumberId:', phoneNumberId);
+  console.log('🔍 messageId:', messageId);
   console.log('🔍 message completo:', JSON.stringify(message, null, 2));
 
   if (!phoneNumberId || !message) {
