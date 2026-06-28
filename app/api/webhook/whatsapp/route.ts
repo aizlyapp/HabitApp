@@ -2,14 +2,8 @@ export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import Groq from 'groq-sdk';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const SYSTEM_PROMPT_TEMPLATE = `
 Sos el asistente virtual de {HOSTEL_NOMBRE}, ubicado en {HOSTEL_DIRECCION}. Tu trabajo es responder consultas de huéspedes potenciales y ayudarlos a hacer reservas.
@@ -34,7 +28,7 @@ REGLAS:
 - Si no sabés algo, decí que van a contactar al hostel directamente
 `;
 
-async function getWhatsappConfig(phoneNumberId: string) {
+async function getWhatsappConfig(phoneNumberId: string, supabase: SupabaseClient) {
   const { data } = await supabase
     .from('business_config')
     .select('*')
@@ -44,7 +38,7 @@ async function getWhatsappConfig(phoneNumberId: string) {
   return data;
 }
 
-async function getHostelData(userId: string) {
+async function getHostelData(userId: string, supabase: SupabaseClient) {
   const [rooms, reservations, config] = await Promise.all([
     supabase
       .from('rooms')
@@ -112,7 +106,7 @@ async function sendWhatsAppMessage(
   }
 }
 
-function insertReservation(userId: string, data: Record<string, string>) {
+function insertReservation(userId: string, data: Record<string, string>, supabase: SupabaseClient) {
   return supabase.from('reservations').insert({
     user_id: userId,
     room_id: data.room_id,
@@ -129,6 +123,11 @@ function insertReservation(userId: string, data: Record<string, string>) {
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     const searchParams = request.nextUrl.searchParams;
     const mode = searchParams.get('hub.mode');
     const token = searchParams.get('hub.verify_token');
@@ -157,6 +156,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
     const body = await request.json();
 
     const entry = body?.entry?.[0];
@@ -181,7 +186,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: 'ignored' });
     }
 
-    const config = await getWhatsappConfig(phoneNumberId);
+    const config = await getWhatsappConfig(phoneNumberId, supabase);
     if (!config) {
       return NextResponse.json({ status: 'unknown_phone' });
     }
@@ -192,7 +197,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: 'bot_disabled' });
     }
 
-    const hostelData = await getHostelData(userId);
+    const hostelData = await getHostelData(userId, supabase);
     if (!hostelData.config) {
       return NextResponse.json({ status: 'no_config' });
     }
@@ -252,7 +257,7 @@ export async function POST(request: NextRequest) {
           guest_count: parts[6]?.trim() || '1',
         };
 
-        const { error: insertError } = await insertReservation(userId, resData);
+        const { error: insertError } = await insertReservation(userId, resData, supabase);
 
         if (insertError) {
           console.error('Reservation insert error:', insertError);
