@@ -25,15 +25,27 @@ import {
 } from 'lucide-react';
 import type { BusinessConfig } from '@/lib/data/business-config';
 import { loadConfig, saveConfig, qrContent } from '@/lib/data/business-config';
+import { createClient } from '@/lib/supabase/client';
+import { loadConfigFromDB, saveConfigToDB } from '@/lib/data/business-config-db';
 
 export function BusinessSettings() {
+  const supabase = createClient();
   const [config, setConfig] = useState<BusinessConfig>(loadConfig);
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setConfig(loadConfig());
+    const local = loadConfig();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.id) {
+        loadConfigFromDB(user.id).then((db) => {
+          setConfig({ ...local, ...db, logo: db.logo || local.logo });
+        });
+      } else {
+        setConfig(local);
+      }
+    });
   }, []);
 
   const update = <K extends keyof BusinessConfig>(
@@ -46,6 +58,11 @@ export function BusinessSettings() {
 
   const handleSave = () => {
     saveConfig(config);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.id) {
+        saveConfigToDB(user.id, config);
+      }
+    });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
