@@ -72,7 +72,7 @@ function buildRoomsContext(rooms: any[], reservations: any[]) {
       const ocupadas = occupiedByRoom[room.id]
         ? `\n    Ocupado: ${occupiedByRoom[room.id].join(', ')}`
         : '';
-      return `  - ${room.name} (${room.type}): $${room.price_per_noche} /noche, Capacidad: ${room.capacity}${ocupadas}`;
+      return `  - ${room.name} (${room.type}): $${room.price_per_night} /noche, Capacidad: ${room.capacity}${ocupadas}`;
     })
     .join('\n');
 }
@@ -83,9 +83,13 @@ async function sendWhatsAppMessage(
   to: string,
   text: string
 ) {
-  const res = await fetch(
-    `https://graph.facebook.com/v25.0/${phoneNumberId}/messages`,
-    {
+  const apiVersion = process.env.WHATSAPP_API_VERSION || 'v22.0';
+  const url = `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`;
+
+  console.log('📤 Enviando mensaje WhatsApp:', { phoneNumberId, to, textPreview: text.slice(0, 80) });
+
+  try {
+    const res = await fetch(url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -97,12 +101,16 @@ async function sendWhatsAppMessage(
         type: 'text',
         text: { body: text },
       }),
-    }
-  );
+    });
 
-  if (!res.ok) {
-    const errBody = await res.text();
-    console.error('WhatsApp API error:', res.status, errBody);
+    if (!res.ok) {
+      const errBody = await res.text();
+      console.error('❌ WhatsApp API error:', res.status, errBody);
+    } else {
+      console.log('✅ Mensaje WhatsApp enviado correctamente');
+    }
+  } catch (err) {
+    console.error('❌ WhatsApp fetch exception:', err);
   }
 }
 
@@ -172,6 +180,7 @@ async function processWhatsAppMessage(body: any) {
   const value = change?.value;
 
   if (!value?.messaging_product) {
+    console.warn('⚠️ Early return: no messaging_product in webhook body');
     return;
   }
 
@@ -179,6 +188,7 @@ async function processWhatsAppMessage(body: any) {
   const message = value.messages?.[0];
 
   if (!phoneNumberId || !message) {
+    console.warn('⚠️ Early return: missing phoneNumberId or message', { phoneNumberId, hasMessage: !!message });
     return;
   }
 
@@ -186,22 +196,26 @@ async function processWhatsAppMessage(body: any) {
   const messageText = message.text?.body?.trim();
 
   if (!from || !messageText) {
+    console.warn('⚠️ Early return: missing from or messageText', { from, messageText });
     return;
   }
 
   const config = await getWhatsappConfig(phoneNumberId, supabase);
   if (!config) {
+    console.warn('⚠️ Early return: no config found for phoneNumberId', { phoneNumberId });
     return;
   }
 
   const userId = config.user_id;
 
   if (!config.bot_enabled) {
+    console.warn('⚠️ Early return: bot disabled for config', { userId: config.user_id, phoneNumberId });
     return;
   }
 
   const hostelData = await getHostelData(userId, supabase);
   if (!hostelData.config) {
+    console.warn('⚠️ Early return: no hostel config found for userId', { userId });
     return;
   }
 
