@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse('Missing parameters', { status: 403 });
   }
 
-  if (mode !== 'subscribe' || token !== 'Boca el unico grande') {
+  if (mode !== 'subscribe' || token !== process.env.VERIFY_TOKEN) {
     return new NextResponse('Invalid verify token', { status: 403 });
   }
 
