@@ -42,7 +42,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user?.id) {
-        loadConfigFromDB(user.id).then(setBusinessConfig);
+        loadConfigFromDB(user.id, supabase).then(setBusinessConfig);
       }
     });
   }, []);

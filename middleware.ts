@@ -29,6 +29,9 @@ export async function middleware(request: NextRequest) {
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/auth');
   const isRoot = request.nextUrl.pathname === '/';
+  const isWebhook = request.nextUrl.pathname.startsWith('/api/webhook');
+
+  if (isWebhook) return supabaseResponse;
 
   if (!user && !isAuthPage) {
     const url = request.nextUrl.clone();

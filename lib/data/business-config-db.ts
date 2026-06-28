@@ -1,12 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { BusinessConfig } from './business-config';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-export async function loadConfigFromDB(userId: string): Promise<Partial<BusinessConfig>> {
+export async function loadConfigFromDB(
+  userId: string,
+  supabase: SupabaseClient
+): Promise<Partial<BusinessConfig>> {
   const { data, error } = await supabase
     .from('business_config')
     .select('*')
@@ -31,7 +29,11 @@ export async function loadConfigFromDB(userId: string): Promise<Partial<Business
   };
 }
 
-export async function saveConfigToDB(userId: string, config: Partial<BusinessConfig>): Promise<void> {
+export async function saveConfigToDB(
+  userId: string,
+  config: Partial<BusinessConfig>,
+  supabase: SupabaseClient
+): Promise<void> {
   const dbData: Record<string, unknown> = {};
 
   if ('whatsappApiToken' in config) dbData.whatsapp_api_token = config.whatsappApiToken;

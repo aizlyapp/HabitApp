@@ -39,7 +39,7 @@ export function BusinessSettings() {
     const local = loadConfig();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user?.id) {
-        loadConfigFromDB(user.id).then((db) => {
+        loadConfigFromDB(user.id, supabase).then((db) => {
           setConfig({ ...local, ...db, logo: db.logo || local.logo });
         });
       } else {
@@ -60,7 +60,7 @@ export function BusinessSettings() {
     saveConfig(config);
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user?.id) {
-        saveConfigToDB(user.id, config);
+        saveConfigToDB(user.id, config, supabase);
       }
     });
     setSaved(true);
