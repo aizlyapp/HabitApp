@@ -85,17 +85,20 @@ async function sendWhatsAppMessage(
   to: string,
   text: string
 ) {
-  const apiVersion = process.env.WHATSAPP_API_VERSION || 'v18.0';
-  const url = `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`;
+  const id = phoneNumberId?.toString().trim() || '';
+  const recipient = to?.toString().trim().replace(/^\+/, '') || '';
+
+  const apiVersion = process.env.WHATSAPP_API_VERSION || 'v21.0';
+  const url = `https://graph.facebook.com/${apiVersion}/${id}/messages`;
 
   const payload = {
     messaging_product: 'whatsapp',
-    to,
+    to: recipient,
     type: 'text',
     text: { body: text },
   };
 
-  console.log('📤 Enviando mensaje WhatsApp:', { phoneNumberId, to, tokenExists: !!token, tokenLength: token?.length, textPreview: text.slice(0, 80) });
+  console.log('📤 Enviando mensaje WhatsApp:', { phoneNumberId: id, to: recipient, tokenExists: !!token, tokenLength: token?.length, textPreview: text.slice(0, 80) });
   console.log('📤 URL completa:', url);
   console.log('📤 JSON body enviado a Meta:', JSON.stringify(payload, null, 2));
 
@@ -111,7 +114,7 @@ async function sendWhatsAppMessage(
 
     if (!res.ok) {
       const errBody = await res.text();
-      console.error('❌ WhatsApp API error:', res.status, errBody);
+      console.error('❌ WhatsApp API error - status:', res.status, '| body:', errBody, '| url:', url, '| payload:', JSON.stringify(payload));
     } else {
       console.log('✅ Mensaje WhatsApp enviado correctamente');
     }
