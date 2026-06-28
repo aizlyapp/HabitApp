@@ -23,8 +23,8 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const isWebhook = request.nextUrl.pathname.startsWith('/api/webhook');
-  if (isWebhook) return supabaseResponse;
+  const isPublicApi = request.nextUrl.pathname.startsWith('/api/webhook') || request.nextUrl.pathname.startsWith('/api/diagnose-whatsapp');
+  if (isPublicApi) return supabaseResponse;
 
   const {
     data: { user },
@@ -50,6 +50,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api/webhook|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/webhook|api/diagnose-whatsapp|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
