@@ -85,10 +85,19 @@ async function sendWhatsAppMessage(
   to: string,
   text: string
 ) {
-  const apiVersion = process.env.WHATSAPP_API_VERSION || 'v22.0';
+  const apiVersion = process.env.WHATSAPP_API_VERSION || 'v21.0';
   const url = `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`;
 
+  const payload = {
+    messaging_product: 'whatsapp',
+    to,
+    type: 'text',
+    text: { body: text },
+  };
+
   console.log('📤 Enviando mensaje WhatsApp:', { phoneNumberId, to, tokenExists: !!token, tokenLength: token?.length, textPreview: text.slice(0, 80) });
+  console.log('📤 URL completa:', url);
+  console.log('📤 JSON body enviado a Meta:', JSON.stringify(payload, null, 2));
 
   try {
     const res = await fetch(url, {
@@ -97,12 +106,7 @@ async function sendWhatsAppMessage(
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to,
-        type: 'text',
-        text: { body: text },
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
