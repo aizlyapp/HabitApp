@@ -98,7 +98,7 @@ export function BookingModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const totalAmount = formData.price_per_person * formData.guest_count;
+  const totalAmount = formData.price_per_person * formData.guest_count * formData.nights;
 
   useEffect(() => {
     if (open) {
@@ -129,7 +129,7 @@ export function BookingModal({
           guest_name: '',
           guest_email: '',
           guest_phone: '+54 ',
-          price_per_person: saved,
+          price_per_person: selectedRoom?.precioPorNoche || saved,
           guest_count: 1,
           check_in: ci,
           check_out: ci ? format(addDays(new Date(ci), 1), 'yyyy-MM-dd') : '',
@@ -142,6 +142,12 @@ export function BookingModal({
   }, [open, editingBooking, selectedRoom, selectedDate]);
 
   const selectedRoomData = rooms.find((r) => r.id === formData.room_id);
+
+  useEffect(() => {
+    if (selectedRoomData && !editingBooking) {
+      setFormData((f) => ({ ...f, price_per_person: selectedRoomData.precioPorNoche }));
+    }
+  }, [selectedRoomData?.id]);
 
   const [nameSuggestions, setNameSuggestions] = useState<Guest[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -386,13 +392,15 @@ export function BookingModal({
           </div>
 
           <div className="rounded-lg bg-zinc-800/50 border border-zinc-700 p-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-zinc-400">
-                {formData.guest_count} persona{formData.guest_count !== 1 ? 's' : ''} × ${formData.price_per_person.toLocaleString('es-AR')}
-              </span>
-              <span className="text-xl font-semibold text-white">
-                ${totalAmount.toLocaleString('es-AR')}
-              </span>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-zinc-400">
+                  ${formData.price_per_person.toLocaleString('es-AR')} × {formData.guest_count} pers × {formData.nights} noche{formData.nights !== 1 ? 's' : ''}
+                </span>
+                <span className="text-xl font-semibold text-white">
+                  ${totalAmount.toLocaleString('es-AR')}
+                </span>
+              </div>
             </div>
           </div>
 

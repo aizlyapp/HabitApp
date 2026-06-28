@@ -34,6 +34,7 @@ import {
   CreditCard,
   Copy,
   Check,
+  ExternalLink,
 } from 'lucide-react';
 import type { Room, Reservation, PaymentStatus } from '@/lib/data/types';
 import { loadConfig, hasPaymentData, qrContent } from '@/lib/data/business-config';
@@ -135,6 +136,7 @@ export function BookingDetailDrawer({
     (new Date(booking.check_out).getTime() - new Date(booking.check_in).getTime()) /
       (1000 * 60 * 60 * 24)
   );
+  const waNumber = booking.guest_phone.replace(/\D/g, '').replace(/^0/, '54');
 
   const canCheckIn = booking.status === 'confirmed';
   const canCheckOut = booking.status === 'checked-in';
@@ -208,7 +210,15 @@ export function BookingDetailDrawer({
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <Phone className="h-4 w-4 text-zinc-500" />
-                <span className="text-zinc-300">{booking.guest_phone}</span>
+                <a
+                  href={`https://wa.me/${waNumber}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-green-400 hover:text-green-300 transition-colors"
+                >
+                  {booking.guest_phone}
+                  <ExternalLink className="h-3 w-3 opacity-50" />
+                </a>
               </div>
             </div>
           </div>
@@ -264,6 +274,9 @@ export function BookingDetailDrawer({
             <span className="text-2xl font-semibold text-white">
               ${booking.total_amount.toLocaleString('es-AR')}
             </span>
+          </div>
+          <div className="text-right text-xs text-zinc-500 -mt-4">
+            ${room.precioPorNoche.toLocaleString('es-AR')} × {booking.guest_count || 1} pers × {nights} noche{nights > 1 ? 's' : ''}
           </div>
 
           {/* Payment Status */}
