@@ -8,6 +8,10 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'Roomy · PMS para Hoteles y Hostels',
   description: 'Roomy — Sistema de gestión para hoteles boutique y hostels',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/logo-192.svg',
+  },
 };
 
 export default function RootLayout({
