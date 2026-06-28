@@ -423,7 +423,7 @@ export function BusinessSettings() {
                   <li>
                     En Webhooks, pegá esta URL:{' '}
                     <code className="text-zinc-300 break-all">
-                      https://aizlyhabitapp.vercel.app/api/webhook/whatsapp
+                      https://habitapp-pms.vercel.app/api/webhook/whatsapp
                     </code>
                   </li>
                   <li>
