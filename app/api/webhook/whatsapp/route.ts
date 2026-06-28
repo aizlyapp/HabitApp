@@ -86,7 +86,7 @@ async function sendWhatsAppMessage(
   text: string
 ) {
   const id = phoneNumberId?.toString().trim() || '';
-  const recipient = to?.toString().trim().replace(/^\+/, '') || '';
+  const recipient = to?.toString().trim().replace(/[^0-9]/g, '') || '';
 
   const apiVersion = process.env.WHATSAPP_API_VERSION || 'v21.0';
   const url = `https://graph.facebook.com/${apiVersion}/${id}/messages`;
@@ -101,20 +101,23 @@ async function sendWhatsAppMessage(
   console.log('📤 Enviando mensaje WhatsApp:', { phoneNumberId: id, to: recipient, tokenExists: !!token, tokenLength: token?.length, textPreview: text.slice(0, 80) });
   console.log('📤 URL completa:', url);
   console.log('📤 JSON body enviado a Meta:', JSON.stringify(payload, null, 2));
+  console.log('LOG_DEBUG: Enviando a URL', url, 'con Body', JSON.stringify(payload));
 
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: 'Bearer ' + process.env.WHATSAPP_TOKEN,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
     });
 
+    const metaResponse = await res.text();
+    console.log('Respuesta de Meta:', metaResponse);
+
     if (!res.ok) {
-      const errBody = await res.text();
-      console.error('❌ WhatsApp API error - status:', res.status, '| body:', errBody, '| url:', url, '| payload:', JSON.stringify(payload));
+      console.error('❌ WhatsApp API error - status:', res.status, '| url:', url, '| payload:', JSON.stringify(payload));
     } else {
       console.log('✅ Mensaje WhatsApp enviado correctamente');
     }
@@ -179,6 +182,8 @@ export async function POST(request: NextRequest) {
 
 async function processWhatsAppMessage(body: any) {
   console.log('LOG_INICIO_PROCESO');
+  console.log('🔍 WHATSAPP_PHONE_NUMBER_ID:', process.env.WHATSAPP_PHONE_NUMBER_ID || '❌ NO SETEADO');
+  console.log('🔍 WHATSAPP_TOKEN existe:', !!process.env.WHATSAPP_TOKEN);
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
