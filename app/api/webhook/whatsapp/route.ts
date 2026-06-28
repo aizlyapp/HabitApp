@@ -1,3 +1,5 @@
+console.log('🚀 WhatsApp webhook route.ts cargado y funcionando');
+
 export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -86,7 +88,7 @@ async function sendWhatsAppMessage(
   const apiVersion = process.env.WHATSAPP_API_VERSION || 'v22.0';
   const url = `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`;
 
-  console.log('📤 Enviando mensaje WhatsApp:', { phoneNumberId, to, textPreview: text.slice(0, 80) });
+  console.log('📤 Enviando mensaje WhatsApp:', { phoneNumberId, to, tokenExists: !!token, tokenLength: token?.length, textPreview: text.slice(0, 80) });
 
   try {
     const res = await fetch(url, {
@@ -110,7 +112,7 @@ async function sendWhatsAppMessage(
       console.log('✅ Mensaje WhatsApp enviado correctamente');
     }
   } catch (err) {
-    console.error('❌ WhatsApp fetch exception:', err);
+    console.error('❌ WhatsApp fetch exception:', (err as Error).message, (err as Error).stack);
   }
 }
 
@@ -169,26 +171,30 @@ export async function POST(request: NextRequest) {
 }
 
 async function processWhatsAppMessage(body: any) {
+  console.log('LOG_INICIO_PROCESO');
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+  // ── 1. Extraer datos del webhook ──────────────────────────────────
   const entry = body?.entry?.[0];
   const change = entry?.changes?.[0];
   const value = change?.value;
+  console.log('🔍 value completo:', JSON.stringify(value, null, 2));
 
   if (!value?.messaging_product) {
-    console.warn('⚠️ Early return: no messaging_product in webhook body');
+    console.warn('⚠️ No messaging_product in webhook body — nothing to process');
     return;
   }
 
   const phoneNumberId = value.metadata?.phone_number_id;
   const message = value.messages?.[0];
+  console.log('🔍 message completo:', JSON.stringify(message, null, 2));
 
   if (!phoneNumberId || !message) {
-    console.warn('⚠️ Early return: missing phoneNumberId or message', { phoneNumberId, hasMessage: !!message });
+    console.warn('⚠️ Missing phoneNumberId or message', { phoneNumberId, hasMessage: !!message });
     return;
   }
 
@@ -196,48 +202,79 @@ async function processWhatsAppMessage(body: any) {
   const messageText = message.text?.body?.trim();
 
   if (!from || !messageText) {
-    console.warn('⚠️ Early return: missing from or messageText', { from, messageText });
+    console.warn('⚠️ Missing from or messageText', { from, messageText });
     return;
   }
 
-  const config = await getWhatsappConfig(phoneNumberId, supabase);
-  if (!config) {
-    console.warn('⚠️ Early return: no config found for phoneNumberId', { phoneNumberId });
+  // ── 2. Resolver token (env WHATSAPP_TOKEN → DB) ──────────────────
+  let token: string | undefined;
+  let config: any;
+
+  token = process.env.WHATSAPP_TOKEN;
+  if (token) {
+    console.log('✅ Token resuelto desde env WHATSAPP_TOKEN');
+  }
+
+  if (!token) {
+    try {
+      config = await getWhatsappConfig(phoneNumberId, supabase);
+      if (config?.whatsapp_api_token) {
+        token = config.whatsapp_api_token;
+        console.log('ℹ️ Token resuelto desde Supabase (fallback)');
+      }
+    } catch (dbErr) {
+      console.error('⚠️ Error consultando Supabase para config:', (dbErr as Error).message, (dbErr as Error).stack);
+    }
+  }
+
+  if (!token) {
+    console.error('❌ No hay token disponible (ni env WHATSAPP_TOKEN ni DB)');
     return;
   }
 
-  const userId = config.user_id;
-
-  if (!config.bot_enabled) {
-    console.warn('⚠️ Early return: bot disabled for config', { userId: config.user_id, phoneNumberId });
-    return;
-  }
-
-  const hostelData = await getHostelData(userId, supabase);
-  if (!hostelData.config) {
-    console.warn('⚠️ Early return: no hostel config found for userId', { userId });
-    return;
-  }
-
-  const roomsContext = buildRoomsContext(hostelData.rooms, hostelData.reservations);
-
-  const formasPago = [
-    hostelData.config.alias_cbu_cvu && `Transferencia bancaria: ${hostelData.config.alias_cbu_cvu}`,
-    hostelData.config.link_pago && `Link de pago: ${hostelData.config.link_pago}`,
-  ]
-    .filter(Boolean)
-    .join('\n');
-
-  const systemPrompt = SYSTEM_PROMPT_TEMPLATE
-    .replace('{HOSTEL_NOMBRE}', hostelData.config.nombre || '')
-    .replace('{HOSTEL_DIRECCION}', hostelData.config.direccion || '')
-    .replace('{HOSTEL_HABITACIONES}', roomsContext || 'Sin habitaciones disponibles')
-    .replace('{HOSTEL_PAGOS}', formasPago || 'Consultar al hostel')
-    .replace('{BOT_PERSONALITY}', config.bot_personality || hostelData.config.bot_personality || '');
-
-  let groqResponse: string;
-
+  // ── 3. Toda la lógica dentro de un solo try/catch ─────────────────
   try {
+    // ── 3a. Bot desactivado → responder igual ───────────────────────
+    if (config && !config.bot_enabled) {
+      console.warn('⚠️ Bot desactivado — respondiendo mensaje genérico');
+      await sendWhatsAppMessage(token, phoneNumberId, from, 'El chatbot está desactivado. Por favor, contactanos directamente.');
+      return;
+    }
+
+    // ── 3b. Sin userId → responder genérico ─────────────────────────
+    const userId = config?.user_id;
+    if (!userId) {
+      console.warn('⚠️ Sin userId en config — respondiendo mensaje genérico');
+      await sendWhatsAppMessage(token, phoneNumberId, from, '¡Gracias por tu mensaje! En breve te responderemos.');
+      return;
+    }
+
+    // ── 3c. Obtener datos del hostel ────────────────────────────────
+    const hostelData = await getHostelData(userId, supabase);
+
+    if (!hostelData.config) {
+      console.warn('⚠️ Sin hostelData.config para userId', { userId });
+      await sendWhatsAppMessage(token, phoneNumberId, from, '¡Gracias por tu mensaje! En breve te responderemos.');
+      return;
+    }
+
+    const roomsContext = buildRoomsContext(hostelData.rooms, hostelData.reservations);
+
+    const formasPago = [
+      hostelData.config.alias_cbu_cvu && `Transferencia bancaria: ${hostelData.config.alias_cbu_cvu}`,
+      hostelData.config.link_pago && `Link de pago: ${hostelData.config.link_pago}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const systemPrompt = SYSTEM_PROMPT_TEMPLATE
+      .replace('{HOSTEL_NOMBRE}', hostelData.config.nombre || '')
+      .replace('{HOSTEL_DIRECCION}', hostelData.config.direccion || '')
+      .replace('{HOSTEL_HABITACIONES}', roomsContext || 'Sin habitaciones disponibles')
+      .replace('{HOSTEL_PAGOS}', formasPago || 'Consultar al hostel')
+      .replace('{BOT_PERSONALITY}', config?.bot_personality || hostelData.config.bot_personality || '');
+
+    // ── 3d. Llamar a Groq ──────────────────────────────────────────
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages: [
@@ -248,59 +285,48 @@ async function processWhatsAppMessage(body: any) {
       max_tokens: 1024,
     });
 
-    groqResponse = completion.choices[0]?.message?.content?.trim() || '';
-  } catch (groqErr) {
-    console.error('Groq API error:', groqErr);
-    await sendWhatsAppMessage(
-      config.whatsapp_api_token,
-      phoneNumberId,
-      from,
-      'En este momento no puedo responder. Contactanos directamente.'
-    );
-    return;
-  }
+    const groqResponse = completion.choices[0]?.message?.content?.trim() || '';
 
-  if (groqResponse.startsWith('RESERVA_CONFIRMAR:')) {
-    const parts = groqResponse.replace('RESERVA_CONFIRMAR:', '').split('|');
+    // ── 3e. Manejar reserva ────────────────────────────────────────
+    if (groqResponse.startsWith('RESERVA_CONFIRMAR:')) {
+      const parts = groqResponse.replace('RESERVA_CONFIRMAR:', '').split('|');
 
-    if (parts.length >= 6) {
-      const resData: Record<string, string> = {
-        nombre: parts[0]?.trim() || '',
-        email: parts[1]?.trim() || '',
-        telefono: parts[2]?.trim() || '',
-        check_in: parts[3]?.trim() || '',
-        check_out: parts[4]?.trim() || '',
-        room_id: parts[5]?.trim() || '',
-        guest_count: parts[6]?.trim() || '1',
-      };
+      if (parts.length >= 6) {
+        const resData: Record<string, string> = {
+          nombre: parts[0]?.trim() || '',
+          email: parts[1]?.trim() || '',
+          telefono: parts[2]?.trim() || '',
+          check_in: parts[3]?.trim() || '',
+          check_out: parts[4]?.trim() || '',
+          room_id: parts[5]?.trim() || '',
+          guest_count: parts[6]?.trim() || '1',
+        };
 
-      const { error: insertError } = await insertReservation(userId, resData, supabase);
+        const { error: insertError } = await insertReservation(userId, resData, supabase);
 
-      if (insertError) {
-        console.error('Reservation insert error:', insertError);
-        await sendWhatsAppMessage(
-          config.whatsapp_api_token,
-          phoneNumberId,
-          from,
-          'Hubo un error al confirmar tu reserva. Por favor, contactanos directamente.'
-        );
+        if (insertError) {
+          console.error('❌ Error insertando reserva:', insertError);
+          await sendWhatsAppMessage(token, phoneNumberId, from, 'Hubo un error al confirmar tu reserva. Por favor, contactanos directamente.');
+          return;
+        }
+
+        const linkPago = hostelData.config.link_pago
+          ? `\n\nPara pagar: ${hostelData.config.link_pago}`
+          : '';
+
+        await sendWhatsAppMessage(token, phoneNumberId, from, `✅ ¡Reserva confirmada! Te esperamos el ${resData.check_in}.${linkPago}`);
         return;
       }
-
-      const linkPago = hostelData.config.link_pago
-        ? `\n\nPara pagar: ${hostelData.config.link_pago}`
-        : '';
-
-      await sendWhatsAppMessage(
-        config.whatsapp_api_token,
-        phoneNumberId,
-        from,
-        `✅ ¡Reserva confirmada! Te esperamos el ${resData.check_in}.${linkPago}`
-      );
-
-      return;
     }
+
+    // ── 3f. Respuesta normal de Groq ───────────────────────────────
+    await sendWhatsAppMessage(token, phoneNumberId, from, groqResponse);
+
+  } catch (err) {
+    // ── 4. CATCH GLOBAL: responde aunque todo falle ────────────────
+    console.error('❌ Error en processWhatsAppMessage:', (err as Error).message, (err as Error).stack);
+    await sendWhatsAppMessage(token, phoneNumberId, from, 'En este momento no puedo procesar tu mensaje. Por favor, contactanos directamente.');
   }
 
-  await sendWhatsAppMessage(config.whatsapp_api_token, phoneNumberId, from, groqResponse);
+  console.log('LOG_FIN_PROCESO');
 }
