@@ -139,141 +139,152 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  let body: any;
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    body = await request.json();
+  } catch (parseErr) {
+    console.error('Webhook POST parse error:', parseErr);
+    return NextResponse.json({ status: 'error' });
+  }
+
+  console.log('📩 Webhook POST body:', JSON.stringify(body));
+
+  const response = NextResponse.json({ status: 'ok' });
+
+  processWhatsAppMessage(body).catch((err) => {
+    console.error('WhatsApp processing error:', err);
+  });
+
+  return response;
+}
+
+async function processWhatsAppMessage(body: any) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+  const entry = body?.entry?.[0];
+  const change = entry?.changes?.[0];
+  const value = change?.value;
+
+  if (!value?.messaging_product) {
+    return;
+  }
+
+  const phoneNumberId = value.metadata?.phone_number_id;
+  const message = value.messages?.[0];
+
+  if (!phoneNumberId || !message) {
+    return;
+  }
+
+  const from = message.from;
+  const messageText = message.text?.body?.trim();
+
+  if (!from || !messageText) {
+    return;
+  }
+
+  const config = await getWhatsappConfig(phoneNumberId, supabase);
+  if (!config) {
+    return;
+  }
+
+  const userId = config.user_id;
+
+  if (!config.bot_enabled) {
+    return;
+  }
+
+  const hostelData = await getHostelData(userId, supabase);
+  if (!hostelData.config) {
+    return;
+  }
+
+  const roomsContext = buildRoomsContext(hostelData.rooms, hostelData.reservations);
+
+  const formasPago = [
+    hostelData.config.alias_cbu_cvu && `Transferencia bancaria: ${hostelData.config.alias_cbu_cvu}`,
+    hostelData.config.link_pago && `Link de pago: ${hostelData.config.link_pago}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const systemPrompt = SYSTEM_PROMPT_TEMPLATE
+    .replace('{HOSTEL_NOMBRE}', hostelData.config.nombre || '')
+    .replace('{HOSTEL_DIRECCION}', hostelData.config.direccion || '')
+    .replace('{HOSTEL_HABITACIONES}', roomsContext || 'Sin habitaciones disponibles')
+    .replace('{HOSTEL_PAGOS}', formasPago || 'Consultar al hostel')
+    .replace('{BOT_PERSONALITY}', config.bot_personality || hostelData.config.bot_personality || '');
+
+  let groqResponse: string;
+
+  try {
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: messageText },
+      ],
+      temperature: 0.7,
+      max_tokens: 1024,
+    });
+
+    groqResponse = completion.choices[0]?.message?.content?.trim() || '';
+  } catch (groqErr) {
+    console.error('Groq API error:', groqErr);
+    await sendWhatsAppMessage(
+      config.whatsapp_api_token,
+      phoneNumberId,
+      from,
+      'En este momento no puedo responder. Contactanos directamente.'
     );
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    return;
+  }
 
-    const body = await request.json();
+  if (groqResponse.startsWith('RESERVA_CONFIRMAR:')) {
+    const parts = groqResponse.replace('RESERVA_CONFIRMAR:', '').split('|');
 
-    const entry = body?.entry?.[0];
-    const change = entry?.changes?.[0];
-    const value = change?.value;
+    if (parts.length >= 6) {
+      const resData: Record<string, string> = {
+        nombre: parts[0]?.trim() || '',
+        email: parts[1]?.trim() || '',
+        telefono: parts[2]?.trim() || '',
+        check_in: parts[3]?.trim() || '',
+        check_out: parts[4]?.trim() || '',
+        room_id: parts[5]?.trim() || '',
+        guest_count: parts[6]?.trim() || '1',
+      };
 
-    if (!value?.messaging_product) {
-      return NextResponse.json({ status: 'ignored' });
-    }
+      const { error: insertError } = await insertReservation(userId, resData, supabase);
 
-    const phoneNumberId = value.metadata?.phone_number_id;
-    const message = value.messages?.[0];
-
-    if (!phoneNumberId || !message) {
-      return NextResponse.json({ status: 'ignored' });
-    }
-
-    const from = message.from;
-    const messageText = message.text?.body?.trim();
-
-    if (!from || !messageText) {
-      return NextResponse.json({ status: 'ignored' });
-    }
-
-    const config = await getWhatsappConfig(phoneNumberId, supabase);
-    if (!config) {
-      return NextResponse.json({ status: 'unknown_phone' });
-    }
-
-    const userId = config.user_id;
-
-    if (!config.bot_enabled) {
-      return NextResponse.json({ status: 'bot_disabled' });
-    }
-
-    const hostelData = await getHostelData(userId, supabase);
-    if (!hostelData.config) {
-      return NextResponse.json({ status: 'no_config' });
-    }
-
-    const roomsContext = buildRoomsContext(hostelData.rooms, hostelData.reservations);
-
-    const formasPago = [
-      hostelData.config.alias_cbu_cvu && `Transferencia bancaria: ${hostelData.config.alias_cbu_cvu}`,
-      hostelData.config.link_pago && `Link de pago: ${hostelData.config.link_pago}`,
-    ]
-      .filter(Boolean)
-      .join('\n');
-
-    const systemPrompt = SYSTEM_PROMPT_TEMPLATE
-      .replace('{HOSTEL_NOMBRE}', hostelData.config.nombre || '')
-      .replace('{HOSTEL_DIRECCION}', hostelData.config.direccion || '')
-      .replace('{HOSTEL_HABITACIONES}', roomsContext || 'Sin habitaciones disponibles')
-      .replace('{HOSTEL_PAGOS}', formasPago || 'Consultar al hostel')
-      .replace('{BOT_PERSONALITY}', config.bot_personality || hostelData.config.bot_personality || '');
-
-    let groqResponse: string;
-
-    try {
-      const completion = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: messageText },
-        ],
-        temperature: 0.7,
-        max_tokens: 1024,
-      });
-
-      groqResponse = completion.choices[0]?.message?.content?.trim() || '';
-    } catch (groqErr) {
-      console.error('Groq API error:', groqErr);
-      await sendWhatsAppMessage(
-        config.whatsapp_api_token,
-        phoneNumberId,
-        from,
-        'En este momento no puedo responder. Contactanos directamente.'
-      );
-      return NextResponse.json({ status: 'groq_error' });
-    }
-
-    if (groqResponse.startsWith('RESERVA_CONFIRMAR:')) {
-      const parts = groqResponse.replace('RESERVA_CONFIRMAR:', '').split('|');
-
-      if (parts.length >= 6) {
-        const resData: Record<string, string> = {
-          nombre: parts[0]?.trim() || '',
-          email: parts[1]?.trim() || '',
-          telefono: parts[2]?.trim() || '',
-          check_in: parts[3]?.trim() || '',
-          check_out: parts[4]?.trim() || '',
-          room_id: parts[5]?.trim() || '',
-          guest_count: parts[6]?.trim() || '1',
-        };
-
-        const { error: insertError } = await insertReservation(userId, resData, supabase);
-
-        if (insertError) {
-          console.error('Reservation insert error:', insertError);
-          await sendWhatsAppMessage(
-            config.whatsapp_api_token,
-            phoneNumberId,
-            from,
-            'Hubo un error al confirmar tu reserva. Por favor, contactanos directamente.'
-          );
-          return NextResponse.json({ status: 'insert_error' });
-        }
-
-        const linkPago = hostelData.config.link_pago
-          ? `\n\nPara pagar: ${hostelData.config.link_pago}`
-          : '';
-
+      if (insertError) {
+        console.error('Reservation insert error:', insertError);
         await sendWhatsAppMessage(
           config.whatsapp_api_token,
           phoneNumberId,
           from,
-          `✅ ¡Reserva confirmada! Te esperamos el ${resData.check_in}.${linkPago}`
+          'Hubo un error al confirmar tu reserva. Por favor, contactanos directamente.'
         );
-
-        return NextResponse.json({ status: 'reservation_created' });
+        return;
       }
+
+      const linkPago = hostelData.config.link_pago
+        ? `\n\nPara pagar: ${hostelData.config.link_pago}`
+        : '';
+
+      await sendWhatsAppMessage(
+        config.whatsapp_api_token,
+        phoneNumberId,
+        from,
+        `✅ ¡Reserva confirmada! Te esperamos el ${resData.check_in}.${linkPago}`
+      );
+
+      return;
     }
-
-    await sendWhatsAppMessage(config.whatsapp_api_token, phoneNumberId, from, groqResponse);
-
-    return NextResponse.json({ status: 'sent' });
-  } catch (err) {
-    console.error('Webhook POST error:', err);
-    return NextResponse.json({ status: 'error' });
   }
+
+  await sendWhatsAppMessage(config.whatsapp_api_token, phoneNumberId, from, groqResponse);
 }
