@@ -84,7 +84,7 @@ async function sendWhatsAppMessage(
   text: string
 ) {
   const res = await fetch(
-    `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`,
+    `https://graph.facebook.com/v25.0/${phoneNumberId}/messages`,
     {
       method: 'POST',
       headers: {
@@ -149,13 +149,11 @@ export async function POST(request: NextRequest) {
 
   console.log('📩 Webhook POST body:', JSON.stringify(body));
 
-  const response = NextResponse.json({ status: 'ok' });
-
-  processWhatsAppMessage(body).catch((err) => {
+  await processWhatsAppMessage(body).catch((err) => {
     console.error('WhatsApp processing error:', err);
   });
 
-  return response;
+  return NextResponse.json({ status: 'ok' });
 }
 
 async function processWhatsAppMessage(body: any) {
