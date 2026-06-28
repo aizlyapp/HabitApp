@@ -82,6 +82,24 @@ export function BookingCalendar({
     return format(day, 'yyyy-MM-dd') === booking.check_in;
   };
 
+  const getCheckoutBookingForRoomOnDay = (roomId: string, day: Date): Reservation | null => {
+    const dayStr = format(day, 'yyyy-MM-dd');
+    return (
+      reservations.find((b) => {
+        if (b.room_id !== roomId) return false;
+        if (b.status === 'cancelled') return false;
+        return dayStr === b.check_out;
+      }) || null
+    );
+  };
+
+  const bookingStatusHex: Record<string, string> = {
+    confirmed: '#0284c7',
+    'checked-in': '#059669',
+    'checked-out': '#52525b',
+    cancelled: '#e11d48',
+  };
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -241,28 +259,17 @@ export function BookingCalendar({
               {/* Day cells */}
               {weekDays.map((day) => {
                 const booking = getBookingForRoomOnDay(room.id, day);
+                const checkoutBooking = getCheckoutBookingForRoomOnDay(room.id, day);
                 const showBookingStart = booking && hasBookingStarted(booking, day);
-                const dayStr = format(day, 'yyyy-MM-dd');
-
-                let span = 1;
-                if (showBookingStart && booking) {
-                  const bookingEnd = new Date(booking.check_out);
-                  for (let i = 0; i < 7; i++) {
-                    const checkDay = addDays(weekStart, i);
-                    if (checkDay >= bookingEnd) break;
-                    if (format(checkDay, 'yyyy-MM-dd') >= dayStr) {
-                      span = i - weekDays.findIndex(d => format(d, 'yyyy-MM-dd') === dayStr);
-                      span = Math.max(1, span + 1);
-                    }
-                  }
-                  span = Math.min(span, 7 - weekDays.findIndex(d => format(d, 'yyyy-MM-dd') === dayStr));
-                }
+                const isCheckoutDay = checkoutBooking !== null;
 
                 return (
                   <div
                     key={day.toISOString()}
                     onClick={() => {
-                      if (!booking && room.status !== 'maintenance') {
+                      if (isCheckoutDay && booking) {
+                        onBookingClick(booking);
+                      } else if (!booking && room.status !== 'maintenance') {
                         onNewBooking(room, day);
                       }
                     }}
@@ -271,8 +278,45 @@ export function BookingCalendar({
                       !booking && room.status !== 'maintenance' && 'cursor-pointer hover:bg-zinc-800/50',
                       room.status === 'maintenance' && 'bg-rose-950/20'
                     )}
+                    title={
+                      isCheckoutDay && checkoutBooking
+                        ? booking
+                          ? `Salida: ${checkoutBooking.guest_name} · Entrada: ${booking.guest_name}`
+                          : `Salida: ${checkoutBooking.guest_name} · Entrada disponible`
+                        : undefined
+                    }
                   >
-                    {showBookingStart && booking && (
+                    {isCheckoutDay && checkoutBooking && (
+                      <div className="absolute inset-0 overflow-hidden rounded-sm">
+                        <div
+                          className="absolute inset-0 flex items-start justify-start"
+                          style={{
+                            clipPath: 'polygon(0 0, 100% 0, 0 100%)',
+                            backgroundColor: booking
+                              ? bookingStatusHex[checkoutBooking.status] || '#1e3a5f'
+                              : '#1e3a5f',
+                          }}
+                        >
+                          <span className="ml-1 mt-0.5 text-[10px] font-bold text-white/90 leading-none">
+                            OUT
+                          </span>
+                        </div>
+                        <div
+                          className="absolute inset-0 flex items-end justify-end"
+                          style={{
+                            clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
+                            backgroundColor: booking
+                              ? bookingStatusHex[booking.status] || '#166534'
+                              : '#166534',
+                          }}
+                        >
+                          <span className="mr-1 mb-0.5 text-[10px] font-medium text-white/90 leading-none truncate max-w-[85%]">
+                            {booking ? booking.guest_name : 'LIBRE'}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    {!isCheckoutDay && showBookingStart && booking && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -292,7 +336,7 @@ export function BookingCalendar({
                         </div>
                       </button>
                     )}
-                    {!showBookingStart && booking && !hasBookingStarted(booking, day) && (
+                    {!isCheckoutDay && booking && !showBookingStart && (
                       <div className="h-full w-full rounded bg-sky-900/30 border-l-2 border-sky-600" />
                     )}
                     {!booking && room.status === 'maintenance' && day.getTime() === weekDays[0].getTime() && (
