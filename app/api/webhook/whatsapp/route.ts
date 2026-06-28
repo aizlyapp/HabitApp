@@ -85,7 +85,7 @@ async function sendWhatsAppMessage(
   to: string,
   text: string
 ) {
-  const apiVersion = process.env.WHATSAPP_API_VERSION || 'v21.0';
+  const apiVersion = process.env.WHATSAPP_API_VERSION || 'v18.0';
   const url = `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`;
 
   const payload = {
