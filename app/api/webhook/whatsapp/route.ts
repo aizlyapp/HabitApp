@@ -139,21 +139,25 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  console.log('📩 Webhook POST recibido - headers:', JSON.stringify(Object.fromEntries(request.headers.entries())));
+  console.log('📩 Webhook POST content-type:', request.headers.get('content-type'));
+
+  let rawBody: string | undefined;
   let body: any;
   try {
-    body = await request.json();
+    rawBody = await request.text();
+    console.log('📩 Webhook POST raw body:', rawBody);
+    body = JSON.parse(rawBody);
   } catch (parseErr) {
-    console.error('Webhook POST parse error:', parseErr);
-    return NextResponse.json({ status: 'error' });
+    console.error('Webhook POST parse error:', parseErr, 'rawBody:', rawBody);
+    return NextResponse.json({ status: 'error', message: 'Evento Recibido' });
   }
-
-  console.log('📩 Webhook POST body:', JSON.stringify(body));
 
   await processWhatsAppMessage(body).catch((err) => {
     console.error('WhatsApp processing error:', err);
   });
 
-  return NextResponse.json({ status: 'ok' });
+  return NextResponse.json({ status: 'ok', message: 'Evento Recibido' });
 }
 
 async function processWhatsAppMessage(body: any) {
