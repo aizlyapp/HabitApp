@@ -1,4 +1,4 @@
-console.log('🚀 WhatsApp webhook route.ts cargado y funcionando [v2]');
+console.log('🚀 WhatsApp webhook route.ts cargado y funcionando [v3]');
 
 export const runtime = 'nodejs';
 
