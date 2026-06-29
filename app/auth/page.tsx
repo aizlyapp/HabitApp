@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { BedDouble, Loader2, AlertCircle } from 'lucide-react';
+import { createTrialSubscription } from '@/lib/subscription';
 
 export default function AuthPage() {
   const router = useRouter();
@@ -29,7 +30,13 @@ export default function AuthPage() {
         if (error) throw error;
         router.push('/');
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { subscription: JSON.stringify(createTrialSubscription()) },
+          },
+        });
         if (error) throw error;
         setError('Revisá tu email para confirmar la cuenta.');
         setMode('login');
@@ -48,7 +55,10 @@ export default function AuthPage() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: `${window.location.origin}/auth/callback` },
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          data: { subscription: JSON.stringify(createTrialSubscription()) },
+        },
       });
       if (error) throw error;
     } catch (err) {

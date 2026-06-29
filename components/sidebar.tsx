@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Home,
   LogOut,
+  CreditCard,
 } from 'lucide-react';
 import { loadConfigFromDB } from '@/lib/data/business-config-db';
 import type { BusinessConfig } from '@/lib/data/business-config';
@@ -30,7 +31,9 @@ const navItems = [
   { id: 'guests', label: 'Huéspedes', icon: Users },
 ];
 
-const bottomNavItems = [{ id: 'settings', label: 'Configuración', icon: Settings }];
+const bottomNavItems = [
+  { id: 'settings', label: 'Configuración', icon: Settings },
+];
 
 export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   const router = useRouter();
@@ -139,6 +142,16 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
           </div>
 
           <div className="space-y-1">
+            <button
+              onClick={() => router.push('/suscripcion')}
+              className={cn(
+                'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                'text-zinc-400 hover:bg-zinc-800 hover:text-white hover:scale-[1.02] active:scale-[0.98]'
+              )}
+            >
+              <CreditCard className="h-5 w-5 flex-shrink-0" />
+              {!collapsed && <span>Suscripción</span>}
+            </button>
             {bottomNavItems.map((item) => (
               <button
                 key={item.id}
