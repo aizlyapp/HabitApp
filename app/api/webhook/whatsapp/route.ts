@@ -110,7 +110,7 @@ async function sendWhatsAppMessage(
     const res = await fetch(url, {
       method: 'POST',
       headers: {
-        Authorization: 'Bearer ' + process.env.WHATSAPP_TOKEN,
+        Authorization: 'Bearer ' + token,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
