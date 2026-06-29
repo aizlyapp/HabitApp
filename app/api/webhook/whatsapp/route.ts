@@ -224,31 +224,27 @@ async function processWhatsAppMessage(body: any) {
     return;
   }
 
-  // ── 2. Resolver token (env WHATSAPP_TOKEN → DB) ──────────────────
+  // ── 2. Cargar config de DB (siempre) y resolver token ────────────
   let token: string | undefined;
   let config: any;
 
-  token = process.env.WHATSAPP_TOKEN;
-  if (token) {
-    console.log('✅ Token resuelto desde env WHATSAPP_TOKEN');
+  try {
+    config = await getWhatsappConfig(phoneNumberId, supabase);
+  } catch (dbErr) {
+    console.warn('⚠️ No hay config en DB para este phoneNumberId');
   }
 
+  token = process.env.WHATSAPP_TOKEN;
   if (!token) {
-    try {
-      config = await getWhatsappConfig(phoneNumberId, supabase);
-      if (config?.whatsapp_api_token) {
-        token = config.whatsapp_api_token;
-        console.log('ℹ️ Token resuelto desde Supabase (fallback)');
-      }
-    } catch (dbErr) {
-      console.error('⚠️ Error consultando Supabase para config:', (dbErr as Error).message, (dbErr as Error).stack);
-    }
+    token = config?.whatsapp_api_token;
   }
 
   if (!token) {
     console.error('❌ No hay token disponible (ni env WHATSAPP_TOKEN ni DB)');
     return;
   }
+
+  console.log('✅ Token resuelto (env:', !!process.env.WHATSAPP_TOKEN, '| DB:', !!config?.whatsapp_api_token, ')');
 
   // ── 3. Toda la lógica dentro de un solo try/catch ─────────────────
   try {
