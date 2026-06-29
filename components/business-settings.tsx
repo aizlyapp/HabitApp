@@ -22,11 +22,18 @@ import {
   Bot,
   MessageCircle,
   RefreshCw,
+  Loader2,
 } from 'lucide-react';
 import type { BusinessConfig } from '@/lib/data/business-config';
 import { loadConfig, saveConfig, qrContent } from '@/lib/data/business-config';
 import { createClient } from '@/lib/supabase/client';
 import { loadConfigFromDB, saveConfigToDB } from '@/lib/data/business-config-db';
+import {
+  getSubscriptionFromMetadata,
+  isSubscriptionActive,
+  getTrialDaysLeft,
+} from '@/lib/subscription';
+import type { SubscriptionData } from '@/lib/subscription';
 
 export function BusinessSettings() {
   const supabase = createClient();
@@ -505,8 +512,107 @@ export function BusinessSettings() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Plan / Suscripción */}
+          <Card className="border-zinc-800 bg-zinc-900">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm font-medium text-zinc-300">
+                <CreditCard className="h-4 w-4 text-sky-400" />
+                Plan y Suscripción
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <SubscriptionStatus />
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
   );
 }
+
+function SubscriptionStatus() {
+  const supabase = createClient();
+  const [sub, setSub] = useState<SubscriptionData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activating, setActivating] = useState(false);
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) { setLoading(false); return; }
+      const metadata = user.user_metadata as { subscription?: string };
+      setSub(getSubscriptionFromMetadata(metadata));
+      setLoading(false);
+    });
+  }, []);
+
+  const activatePro = async () => {
+    setActivating(true);
+    setMessage('');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setActivating(false); return; }
+
+    const currentSub = getSubscriptionFromMetadata(
+      (user.user_metadata as { subscription?: string })
+    );
+    const updated: SubscriptionData = {
+      ...currentSub,
+      plan: 'pro',
+      status: 'active',
+      subscribedAt: new Date().toISOString(),
+    };
+
+    const { error } = await supabase.auth.updateUser({
+      data: { subscription: JSON.stringify(updated) },
+    });
+
+    if (error) {
+      setMessage('Error al activar: ' + error.message);
+    } else {
+      setMessage('✅ Plan Pro activado manualmente');
+      setSub(updated);
+    }
+    setActivating(false);
+  };
+
+  if (loading) return <Loader2 className="h-5 w-5 animate-spin text-zinc-500" />;
+
+  const daysLeft = sub ? getTrialDaysLeft(sub) : 0;
+  const active = sub ? isSubscriptionActive(sub) : false;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-zinc-400">Estado</span>
+        <Badge className={active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}>
+          {active ? 'Activo' : 'Vencido'}
+        </Badge>
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-zinc-400">Plan</span>
+        <span className="text-sm font-medium text-white capitalize">{sub?.plan || 'trial'}</span>
+      </div>
+      {sub?.plan === 'trial' && (
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-zinc-400">Trial</span>
+          <span className="text-sm text-zinc-300">{daysLeft} días restantes</span>
+        </div>
+      )}
+      <Separator className="bg-zinc-800" />
+      <p className="text-xs text-zinc-500">
+        Mientras no integres Mercado Pago, podés activar el plan Pro manualmente:
+      </p>
+      <Button
+        onClick={activatePro}
+        disabled={activating || sub?.plan === 'pro'}
+        className="w-full bg-sky-600 text-white hover:bg-sky-700"
+      >
+        {activating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+        {sub?.plan === 'pro' ? '✅ Plan Pro activado' : 'Activar Plan Pro (manual)'}
+      </Button>
+      {message && <p className="text-xs text-zinc-400">{message}</p>}
+    </div>
+  );
+}
+
