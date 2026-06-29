@@ -1,21 +1,30 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { getSubscriptionFromMetadata, isSubscriptionActive, getTrialDaysLeft } from '@/lib/subscription';
 import type { SubscriptionData } from '@/lib/subscription';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BedDouble, Loader2, Check, Clock, AlertTriangle } from 'lucide-react';
+import { BedDouble, Loader2, Check, Clock, AlertTriangle, ExternalLink } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 export default function SubscriptionPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const [sub, setSub] = useState<SubscriptionData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [paying, setPaying] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (searchParams.get('success') === 'true') {
+      toast({ description: '¡Suscripción activada! Bienvenido a Roomy Pro.' });
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -29,6 +38,25 @@ export default function SubscriptionPage() {
       setLoading(false);
     });
   }, []);
+
+  const handleSubscribe = async () => {
+    setPaying(true);
+    try {
+      const res = await fetch('/api/mercado-pago/create-subscription', {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast({ description: 'Error al crear el pago. Intentá de nuevo.' });
+      }
+    } catch {
+      toast({ description: 'Error de conexión. Intentá de nuevo.' });
+    } finally {
+      setPaying(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -111,10 +139,10 @@ export default function SubscriptionPage() {
             {/* Price */}
             <div>
               <p className="text-3xl font-bold text-white">
-                $99 <span className="text-lg font-normal text-zinc-500">USD / mes</span>
+                $120.000 <span className="text-lg font-normal text-zinc-500">ARS / mes</span>
               </p>
               <p className="mt-1 text-sm text-zinc-500">
-                ≈ ARS al tipo de cambio oficial
+                ≈ $99 USD · Sin cargo de inscripción
               </p>
             </div>
 
@@ -137,21 +165,31 @@ export default function SubscriptionPage() {
 
             {/* Action */}
             <div className="space-y-3">
-              {!active && sub.plan === 'trial' && daysLeft === 0 ? (
-                <Button className="w-full bg-sky-600 text-white hover:bg-sky-700 h-12 text-base">
-                  Suscribirse ahora
-                </Button>
-              ) : active && sub.plan === 'pro' ? (
+              {active && sub.plan === 'pro' ? (
                 <p className="text-center text-sm text-emerald-400">
                   Ya estás suscripto a Roomy Pro
                 </p>
               ) : (
-                <div className="flex items-center justify-center gap-2 text-sm text-zinc-500">
-                  <Clock className="h-4 w-4" />
-                  {daysLeft > 0
-                    ? `Te quedan ${daysLeft} días de prueba gratis`
-                    : 'Tu prueba gratis terminó'}
-                </div>
+                <>
+                  <Button
+                    onClick={handleSubscribe}
+                    disabled={paying}
+                    className="w-full bg-sky-600 text-white hover:bg-sky-700 h-12 text-base gap-2"
+                  >
+                    {paying ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <ExternalLink className="h-5 w-5" />
+                    )}
+                    {paying ? 'Redirigiendo a Mercado Pago...' : 'Suscribirme ahora'}
+                  </Button>
+                  {sub?.plan === 'trial' && daysLeft > 0 && (
+                    <div className="flex items-center justify-center gap-2 text-sm text-zinc-500">
+                      <Clock className="h-4 w-4" />
+                      Te quedan {daysLeft} días de prueba gratis — sin compromiso
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </CardContent>
