@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
       const payload = {
         messaging_product: 'whatsapp',
-        to: testNumber.replace(/[^0-9]/g, ''),
+        to: testNumber.replace(/[^0-9]/g, '').replace(/^549/, '54'),
         type: 'text' as const,
         text: { body: '🔧 Test de diagnóstico desde HabitApp' },
       };

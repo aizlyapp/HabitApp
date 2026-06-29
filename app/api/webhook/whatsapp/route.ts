@@ -86,7 +86,10 @@ async function sendWhatsAppMessage(
   text: string
 ) {
   const id = phoneNumberId?.toString().trim() || '';
-  const recipient = to?.toString().trim().replace(/[^0-9]/g, '') || '';
+  let recipient = to?.toString().trim().replace(/[^0-9]/g, '') || '';
+  if (recipient.startsWith('549')) {
+    recipient = '54' + recipient.slice(3);
+  }
 
   const apiVersion = process.env.WHATSAPP_API_VERSION || 'v21.0';
   const url = `https://graph.facebook.com/${apiVersion}/${id}/messages`;
