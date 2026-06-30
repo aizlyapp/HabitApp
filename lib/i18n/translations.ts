@@ -349,8 +349,8 @@ export const translations = {
   },
   landing: {
     nav_cta: { es: 'Probá gratis', pt: 'Experimente grátis' },
-    hero_badge: { es: 'Nuevo · PMS para hostels y hoteles boutique', pt: 'Novo · PMS para hostels e hotéis boutique' },
-    hero_title: { es: 'Gestioná tu hostel sin caos', pt: 'Gerencie seu hostel sem caos' },
+    hero_badge: { es: 'PMS para hostels y hoteles boutique', pt: 'PMS para hostels e hotéis boutique' },
+    hero_title: { es: 'Dejá de perder reservas mezclando WhatsApp, Booking y Excel', pt: 'Pare de perder reservas misturando WhatsApp, Booking e Excel' },
     hero_sub: { es: 'Reservas, habitaciones y huéspedes en un solo lugar. Simple, rápido y pensado para hostels y hoteles boutique.', pt: 'Reservas, quartos e hóspedes em um só lugar. Simples, rápido e feito para hostels e hotéis boutique.' },
     hero_cta_1: { es: 'Probá Roomy gratis', pt: 'Experimente Roomy grátis' },
     hero_cta_2: { es: 'Ver demo', pt: 'Ver demonstração' },
