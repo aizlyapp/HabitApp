@@ -51,6 +51,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px;
+  box-sizing: border-box;
 }
 
 /* Navigation */
@@ -1312,12 +1313,20 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .landing-page {
+    overflow-x: hidden;
+  }
+
   .features-seo-text {
     margin: 0 auto 48px;
+    padding: 0 16px;
+    box-sizing: border-box;
   }
   
   .seo-text {
     margin: 0 auto 32px;
+    padding: 0 16px;
+    box-sizing: border-box;
   }
 
   .custom-cursor {
