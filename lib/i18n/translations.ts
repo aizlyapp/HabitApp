@@ -397,7 +397,7 @@ export const translations = {
     testimonial_3_name: { es: 'Lucía Fernández', pt: 'Lucía Fernández' },
     testimonial_3_role: { es: 'Hostel Buenos Aires Centro', pt: 'Hostel Buenos Aires Centro' },
     testimonial_3_quote: { es: 'Arranqué el trial sin expectativas y a los 3 días ya había pagado la suscripción. Me ahorra horas por semana.', pt: 'Comecei o trial sem expectativas e em 3 dias já tinha pago a assinatura. Me economiza horas por semana.' },
-    pricing_title: { es: 'Desde 50 USD fijos al mes. El precio más transparente para hostels de Latinoamérica.', pt: 'A partir de 50 USD fixos por mês. O preço mais transparente para hostels da América Latina.' },
+    pricing_title: { es: 'Un precio. Todo incluido. Pagá en tu moneda. Para toda Latinoamérica.', pt: 'Um preço. Tudo incluído. Pague na sua moeda. Para toda a América Latina.' },
     pricing_badge: { es: '14 días gratis · Sin tarjeta · Sin compromisos', pt: '14 dias grátis · Sem cartão · Sem compromisso' },
     pricing_currency: { es: '$', pt: 'R$' },
     pricing_period: { es: 'ARS / mes', pt: 'BRL / mês' },
