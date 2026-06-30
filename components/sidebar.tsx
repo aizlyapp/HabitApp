@@ -15,8 +15,10 @@ import {
   Home,
   LogOut,
   CreditCard,
+  Languages,
 } from 'lucide-react';
 import { loadConfigFromDB } from '@/lib/data/business-config-db';
+import { useTranslation } from '@/lib/i18n/context';
 import type { BusinessConfig } from '@/lib/data/business-config';
 
 interface SidebarProps {
@@ -25,19 +27,20 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { id: 'dashboard', label: 'Panel Principal', icon: Home },
-  { id: 'calendar', label: 'Reservas', icon: Calendar },
-  { id: 'rooms', label: 'Habitaciones', icon: BedDouble },
-  { id: 'guests', label: 'Huéspedes', icon: Users },
+  { id: 'dashboard', key: 'sidebar.panelPrincipal', icon: Home },
+  { id: 'calendar', key: 'sidebar.reservas', icon: Calendar },
+  { id: 'rooms', key: 'sidebar.habitaciones', icon: BedDouble },
+  { id: 'guests', key: 'sidebar.huespedes', icon: Users },
 ];
 
 const bottomNavItems = [
-  { id: 'settings', label: 'Configuración', icon: Settings },
+  { id: 'settings', key: 'sidebar.configuracion', icon: Settings },
 ];
 
 export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   const router = useRouter();
   const supabase = createClient();
+  const { t, lang, toggleLang } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [businessConfig, setBusinessConfig] = useState<Partial<BusinessConfig>>({});
@@ -136,7 +139,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
                 )}
               >
                 <item.icon className="h-5 w-5 flex-shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
+                {!collapsed && <span>{t(item.key)}</span>}
               </button>
             ))}
           </div>
@@ -150,7 +153,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
               )}
             >
               <CreditCard className="h-5 w-5 flex-shrink-0" />
-              {!collapsed && <span>Suscripción</span>}
+              {!collapsed && <span>{t('sidebar.suscripcion')}</span>}
             </button>
             {bottomNavItems.map((item) => (
               <button
@@ -167,9 +170,19 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
                 )}
               >
                 <item.icon className="h-5 w-5 flex-shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
+                {!collapsed && <span>{t(item.key)}</span>}
               </button>
             ))}
+            {/* Language toggle */}
+            {!collapsed && (
+              <button
+                onClick={toggleLang}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-white hover:scale-[1.02] active:scale-[0.98] transition-colors"
+              >
+                <Languages className="h-5 w-5 flex-shrink-0" />
+                <span>{lang === 'es' ? 'PT' : 'ES'}</span>
+              </button>
+            )}
             <button
               onClick={handleLogout}
               className={cn(
@@ -178,7 +191,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
               )}
             >
               <LogOut className="h-5 w-5 flex-shrink-0" />
-              {!collapsed && <span>Cerrar sesión</span>}
+              {!collapsed && <span>{t('sidebar.cerrarSesion')}</span>}
             </button>
           </div>
         </nav>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from '@/lib/i18n/context';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import {
   Store,
   MapPin,
@@ -36,6 +38,7 @@ import {
 import type { SubscriptionData } from '@/lib/subscription';
 
 export function BusinessSettings() {
+  const { t } = useTranslation();
   const supabase = createClient();
   const [config, setConfig] = useState<BusinessConfig>(loadConfig);
   const [saved, setSaved] = useState(false);
@@ -167,24 +170,24 @@ export function BusinessSettings() {
   return (
     <div className="flex flex-col gap-6 p-4 lg:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-white">Configuración del Negocio</h1>
-          <p className="mt-1 text-sm text-zinc-400">
-            Datos de facturación y cobro para tus huéspedes
+          <h1 className="text-xl sm:text-2xl font-semibold text-white">{t('settings.title')}</h1>
+          <p className="mt-1 text-xs sm:text-sm text-zinc-400">
+            {t('settings.subtitle')}
           </p>
         </div>
         <Button
           onClick={handleSave}
-          className="gap-2 bg-sky-600 text-white hover:bg-sky-700"
+          className="gap-2 bg-sky-600 text-white hover:bg-sky-700 w-full sm:w-auto h-9 sm:h-10 text-xs sm:text-sm"
         >
           {saved ? (
             <>
-              <Check className="h-4 w-4" />
-              Guardado
+              <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              {t('settings.guardado')}
             </>
           ) : (
-            'Guardar'
+            t('settings.guardar')
           )}
         </Button>
       </div>
@@ -196,66 +199,66 @@ export function BusinessSettings() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm font-medium text-zinc-300">
                 <Store className="h-4 w-4 text-sky-400" />
-                Datos del Negocio
+                {t('settings.datosNegocio')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="nombre" className="text-zinc-300">
-                  Nombre del hotel/hostel
-                </Label>
-                <Input
-                  id="nombre"
-                  value={config.nombre}
-                  onChange={(e) => update('nombre', e.target.value)}
-                  placeholder="Ej: Hostel Buenos Aires"
+                  <Label htmlFor="nombre" className="text-zinc-300">
+                    {t('settings.nombreHotel')}
+                  </Label>
+                  <Input
+                    id="nombre"
+                    value={config.nombre}
+                    onChange={(e) => update('nombre', e.target.value)}
+                    placeholder={t('settings.nombrePlaceholder')}
                   className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="direccion" className="text-zinc-300">
-                  Dirección
-                </Label>
-                <Input
-                  id="direccion"
-                  value={config.direccion}
-                  onChange={(e) => update('direccion', e.target.value)}
-                  placeholder="Ej: Av. Corrientes 1234, CABA"
+                  <Label htmlFor="direccion" className="text-zinc-300">
+                    {t('settings.direccion')}
+                  </Label>
+                  <Input
+                    id="direccion"
+                    value={config.direccion}
+                    onChange={(e) => update('direccion', e.target.value)}
+                    placeholder={t('settings.direccionPlaceholder')}
                   className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="titular" className="text-zinc-300">
-                    Titular de la cuenta
-                  </Label>
-                  <Input
-                    id="titular"
-                    value={config.titular}
-                    onChange={(e) => update('titular', e.target.value)}
-                    placeholder="Ej: Juan Pérez"
-                    className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500"
+                    <Label htmlFor="titular" className="text-zinc-300 text-xs sm:text-sm">
+                      {t('settings.titular')}
+                    </Label>
+                    <Input
+                      id="titular"
+                      value={config.titular}
+                      onChange={(e) => update('titular', e.target.value)}
+                      placeholder={t('settings.titularPlaceholder')}
+                    className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500 text-xs sm:text-sm"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="banco" className="text-zinc-300">
-                    Banco
-                  </Label>
-                  <Input
-                    id="banco"
-                    value={config.banco}
-                    onChange={(e) => update('banco', e.target.value)}
-                    placeholder="Ej: Banco Macro"
-                    className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500"
+                    <Label htmlFor="banco" className="text-zinc-300 text-xs sm:text-sm">
+                      {t('settings.banco')}
+                    </Label>
+                    <Input
+                      id="banco"
+                      value={config.banco}
+                      onChange={(e) => update('banco', e.target.value)}
+                      placeholder={t('settings.bancoPlaceholder')}
+                    className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500 text-xs sm:text-sm"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="logo" className="text-zinc-300">
-                  Logo
+                  {t('settings.logo')}
                 </Label>
                 <div className="flex items-center gap-4">
                   {config.logo && (
@@ -267,7 +270,7 @@ export function BusinessSettings() {
                   )}
                   <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-700 hover:text-white">
                     <ImageUp className="h-4 w-4" />
-                    {config.logo ? 'Cambiar logo' : 'Subir logo'}
+                    {config.logo ? t('settings.cambiarLogo') : t('settings.subirLogo')}
                     <input
                       type="file"
                       accept="image/*"
@@ -285,19 +288,19 @@ export function BusinessSettings() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm font-medium text-zinc-300">
                 <CreditCard className="h-4 w-4 text-emerald-400" />
-                Datos de Cobro
+                {t('settings.datosCobro')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="alias" className="text-zinc-300">
-                  Alias / CBU / CVU
+                  {t('settings.alias')}
                 </Label>
                 <Textarea
                   id="alias"
                   value={config.aliasCbuCvu}
                   onChange={(e) => update('aliasCbuCvu', e.target.value)}
-                  placeholder="Ej: alias.mercadopago o CBU: 123456..."
+                  placeholder={t('settings.aliasPlaceholder')}
                   className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500 resize-none"
                   rows={2}
                 />
@@ -305,18 +308,18 @@ export function BusinessSettings() {
 
               <div className="space-y-2">
                 <Label htmlFor="linkPago" className="text-zinc-300">
-                  Link de Pago (Mercado Pago)
+                  {t('settings.linkPago')}
                 </Label>
                 <Input
                   id="linkPago"
                   value={config.linkPago}
                   onChange={(e) => update('linkPago', e.target.value)}
-                  placeholder="https://mpago.la/..."
+                  placeholder={t('settings.linkPlaceholder')}
                   className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500"
                 />
                 {!config.linkPago && (
                   <p className="text-xs text-zinc-500">
-                    Creá tu link en mercadopago.com.ar/herramientas/cobrar
+                    {t('settings.linkHelper')}
                   </p>
                 )}
               </div>
@@ -328,14 +331,14 @@ export function BusinessSettings() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm font-medium text-zinc-300">
                 <Bot className="h-4 w-4 text-green-400" />
-                Chatbot de WhatsApp
+                {t('settings.chatbotWhatsApp')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between py-2">
                 <div>
-                  <p className="text-sm text-zinc-300 font-medium">Activar chatbot</p>
-                  <p className="text-xs text-zinc-500">El bot responderá mensajes automáticamente</p>
+                  <p className="text-sm text-zinc-300 font-medium">{t('settings.activarChatbot')}</p>
+                  <p className="text-xs text-zinc-500">{t('settings.chatbotSubtext')}</p>
                 </div>
                 <Switch
                   checked={config.botEnabled ?? false}
@@ -344,31 +347,31 @@ export function BusinessSettings() {
               </div>
               <Separator className="bg-zinc-800" />
               <div className="space-y-2">
-                <Label className="text-zinc-300">WhatsApp API Token</Label>
+                <Label className="text-zinc-300">{t('settings.apiToken')}</Label>
                 <Input
                   type="password"
                   value={config.whatsappApiToken ?? ''}
                   onChange={(e) => update('whatsappApiToken', e.target.value)}
-                  placeholder="EAAT..."
+                  placeholder={t('settings.apiTokenPlaceholder')}
                   className="border-zinc-700 bg-zinc-800 text-white"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-zinc-300">Phone Number ID</Label>
+                <Label className="text-zinc-300">{t('settings.phoneId')}</Label>
                 <Input
                   value={config.whatsappPhoneId ?? ''}
                   onChange={(e) => update('whatsappPhoneId', e.target.value)}
-                  placeholder="123456789"
+                  placeholder={t('settings.phoneIdPlaceholder')}
                   className="border-zinc-700 bg-zinc-800 text-white"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-zinc-300">Verify Token</Label>
+                <Label className="text-zinc-300">{t('settings.verifyToken')}</Label>
                 <div className="flex gap-2">
                   <Input
                     value={config.whatsappVerifyToken ?? ''}
                     onChange={(e) => update('whatsappVerifyToken', e.target.value)}
-                    placeholder="Token de verificación"
+                    placeholder={t('settings.verifyTokenPlaceholder')}
                     className="border-zinc-700 bg-zinc-800 text-white font-mono text-xs"
                   />
                   <Button
@@ -377,30 +380,30 @@ export function BusinessSettings() {
                     size="icon"
                     className="shrink-0 border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
                     onClick={() => update('whatsappVerifyToken', crypto.randomUUID())}
-                    title="Generar nuevo token"
+                    title={t('settings.generarToken')}
                   >
                     <RefreshCw className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-zinc-300">Personalidad del bot</Label>
+                <Label className="text-zinc-300">{t('settings.personalidadBot')}</Label>
                 <Textarea
                   value={config.botPersonality ?? ''}
                   onChange={(e) => update('botPersonality', e.target.value)}
-                  placeholder="Ej: Somos un hostel familiar en Bariloche. Tenemos desayuno los fines de semana."
+                  placeholder={t('settings.personalidadPlaceholder')}
                   className="border-zinc-700 bg-zinc-800 text-white resize-none"
                   rows={3}
                 />
               </div>
               <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-3 space-y-1">
                 <p className="text-xs font-medium text-zinc-300">📋 Cómo configurar en Meta:</p>
-                <p className="text-[11px] text-zinc-500">1. Entrá a developers.facebook.com</p>
-                <p className="text-[11px] text-zinc-500">2. Creá una app tipo Business → agregá WhatsApp</p>
-                <p className="text-[11px] text-zinc-500">3. En Webhooks pegá esta URL:</p>
-                <p className="text-[11px] text-sky-400 break-all">https://aizlyhabitapp.vercel.app/api/webhook/whatsapp</p>
-                <p className="text-[11px] text-zinc-500">4. En Verify Token pegá el token generado arriba</p>
-                <p className="text-[11px] text-zinc-500">5. Copiá el Token de acceso y Phone Number ID</p>
+                <p className="text-[11px] text-zinc-500">{t('settings.metaStep1')}</p>
+                <p className="text-[11px] text-zinc-500">{t('settings.metaStep2')}</p>
+                <p className="text-[11px] text-zinc-500">{t('settings.metaStep3')}</p>
+                <p className="text-[11px] text-sky-400 break-all">https://app.roomy.com.ar/api/webhook/whatsapp</p>
+                <p className="text-[11px] text-zinc-500">{t('settings.metaStep4')}</p>
+                <p className="text-[11px] text-zinc-500">{t('settings.metaStep5')}</p>
               </div>
             </CardContent>
           </Card>
@@ -412,12 +415,12 @@ export function BusinessSettings() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm font-medium text-zinc-300">
                 <QrCode className="h-4 w-4 text-sky-400" />
-                QR de Mostrador
+                {t('settings.qrMostrador')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-xs text-zinc-500">
-                El QR contiene tus datos de pago. El huésped lo escanea y paga al instante.
+                {t('settings.qrDescription')}
               </p>
 
               {qrValue ? (
@@ -439,14 +442,14 @@ export function BusinessSettings() {
                     className="w-full gap-2 bg-zinc-700 text-white hover:bg-zinc-600"
                   >
                     <Download className="h-4 w-4" />
-                    Descargar QR (PNG)
+                    {t('settings.descargarQR')}
                   </Button>
                 </>
               ) : (
                 <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-700 p-8 text-center">
                   <QrCode className="h-10 w-10 text-zinc-600" />
                   <p className="text-sm text-zinc-500">
-                    Ingresá el link de Mercado Pago arriba
+                    {t('settings.qrEmpty')}
                   </p>
                 </div>
               )}
@@ -454,7 +457,7 @@ export function BusinessSettings() {
               <Separator className="bg-zinc-800" />
 
               <div className="space-y-2">
-                <p className="text-xs font-medium text-zinc-400">Vista previa del comprobante</p>
+                <p className="text-xs font-medium text-zinc-400">{t('settings.vistaPrevia')}</p>
                 <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-3">
                   {config.logo && (
                     <div className="flex justify-center mb-2">
@@ -507,7 +510,7 @@ export function BusinessSettings() {
                   ) : (
                     <Copy className="h-3 w-3" />
                   )}
-                  {copied ? 'Copiado' : 'Copiar datos de pago'}
+                  {copied ? 'Copiado' : t('settings.copiarDatos')}
                 </Button>
               </div>
             </CardContent>
@@ -518,7 +521,7 @@ export function BusinessSettings() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm font-medium text-zinc-300">
                 <CreditCard className="h-4 w-4 text-sky-400" />
-                Plan y Suscripción
+                {t('settings.planSuscripcion')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -532,6 +535,7 @@ export function BusinessSettings() {
 }
 
 function SubscriptionStatus() {
+  const { t } = useTranslation();
   const supabase = createClient();
   const [sub, setSub] = useState<SubscriptionData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -568,9 +572,9 @@ function SubscriptionStatus() {
     });
 
     if (error) {
-      setMessage('Error al activar: ' + error.message);
+      setMessage(t('settings.errorActivar') + error.message);
     } else {
-      setMessage('✅ Plan Pro activado manualmente');
+      setMessage(t('settings.planProActivadoManual'));
       setSub(updated);
     }
     setActivating(false);
@@ -584,24 +588,24 @@ function SubscriptionStatus() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-zinc-400">Estado</span>
+        <span className="text-sm text-zinc-400">{t('settings.estado')}</span>
         <Badge className={active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}>
-          {active ? 'Activo' : 'Vencido'}
+          {active ? t('settings.activo') : t('settings.vencido')}
         </Badge>
       </div>
       <div className="flex items-center justify-between">
-        <span className="text-sm text-zinc-400">Plan</span>
+        <span className="text-sm text-zinc-400">{t('settings.plan')}</span>
         <span className="text-sm font-medium text-white capitalize">{sub?.plan || 'trial'}</span>
       </div>
       {sub?.plan === 'trial' && (
         <div className="flex items-center justify-between">
-          <span className="text-sm text-zinc-400">Trial</span>
-          <span className="text-sm text-zinc-300">{daysLeft} días restantes</span>
+          <span className="text-sm text-zinc-400">{t('settings.trial')}</span>
+          <span className="text-sm text-zinc-300">{t('settings.diasRestantes', { days: daysLeft })}</span>
         </div>
       )}
       <Separator className="bg-zinc-800" />
       <p className="text-xs text-zinc-500">
-        Mientras no integres Mercado Pago, podés activar el plan Pro manualmente:
+        {t('settings.activarManualHelper')}
       </p>
       <Button
         onClick={activatePro}
@@ -609,7 +613,7 @@ function SubscriptionStatus() {
         className="w-full bg-sky-600 text-white hover:bg-sky-700"
       >
         {activating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-        {sub?.plan === 'pro' ? '✅ Plan Pro activado' : 'Activar Plan Pro (manual)'}
+        {sub?.plan === 'pro' ? t('settings.planProActivado') : t('settings.activarPlanPro')}
       </Button>
       {message && <p className="text-xs text-zinc-400">{message}</p>}
     </div>

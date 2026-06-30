@@ -35,6 +35,7 @@ import type { Guest } from '@/lib/data/types';
 import * as repo from '@/lib/data/repository';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/data/queries';
+import { useTranslation } from '@/lib/i18n/context';
 
 interface GuestManagerProps {
   guests: Guest[];
@@ -58,6 +59,7 @@ function parseCSV(text: string): Omit<Guest, 'id' | 'fechaRegistro'>[] {
 }
 
 export function GuestManager({ guests }: GuestManagerProps) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const supabase = createClient();
   const [userId, setUserId] = useState<string | null>(null);
@@ -99,7 +101,7 @@ export function GuestManager({ guests }: GuestManagerProps) {
       setDialogOpen(false);
       setForm({ nombre: '', email: '', telefono: '' });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al crear huésped');
+      setError(err instanceof Error ? err.message : t('guestManager.errorCrear'));
     } finally {
       setSaving(false);
     }
@@ -114,17 +116,17 @@ export function GuestManager({ guests }: GuestManagerProps) {
       const text = await file.text();
       const parsed = parseCSV(text);
       if (parsed.length === 0) {
-        setImportResult('No se encontraron huéspedes en el archivo.');
+        setImportResult(t('guestManager.noEncontradosCSV'));
         return;
       }
       const created = await Promise.all(parsed.map((g) => repo.insertGuest(userId, g)));
       queryClient.setQueryData<Guest[]>(queryKeys.guests, (old: Guest[] | undefined) =>
         old ? [...old, ...created] : created
       );
-      setImportResult(`${created.length} huéspedes importados.`);
+      setImportResult(t('guestManager.importados', { count: created.length }));
     } catch (err) {
       setImportResult(
-        `Error: ${err instanceof Error ? err.message : 'Archivo inválido'}`
+        `Error: ${err instanceof Error ? err.message : t('guestManager.archivoInvalido')}`
       );
     } finally {
       setImporting(false);
@@ -137,9 +139,9 @@ export function GuestManager({ guests }: GuestManagerProps) {
       <div className="flex flex-col gap-4 border-b border-zinc-800 p-4 lg:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-white">Huéspedes</h1>
-            <p className="mt-1 text-sm text-zinc-400">
-              {guests.length} huéspedes registrados
+            <h1 className="text-xl sm:text-2xl font-semibold text-white">{t('guestManager.title')}</h1>
+            <p className="mt-1 text-xs sm:text-sm text-zinc-400">
+              {t('guestManager.subtitle', { count: guests.length })}
             </p>
           </div>
           <div className="flex gap-2">
@@ -154,14 +156,14 @@ export function GuestManager({ guests }: GuestManagerProps) {
               variant="outline"
               onClick={() => fileInputRef.current?.click()}
               disabled={importing}
-              className="border-zinc-700 bg-transparent text-zinc-300 hover:bg-zinc-800 hover:text-white gap-2"
+              className="border-zinc-700 bg-transparent text-zinc-300 hover:bg-zinc-800 hover:text-white gap-1.5 sm:gap-2 h-9 sm:h-10 px-3 sm:px-4"
             >
               {importing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
               ) : (
-                <Upload className="h-4 w-4" />
+                <Upload className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               )}
-              Importar CSV
+              <span className="text-xs sm:text-sm">{t('guestManager.importarCSV')}</span>
             </Button>
             <Button
               onClick={() => {
@@ -169,10 +171,10 @@ export function GuestManager({ guests }: GuestManagerProps) {
                 setError(null);
                 setDialogOpen(true);
               }}
-              className="gap-2 bg-sky-600 text-white hover:bg-sky-700"
+              className="gap-1.5 sm:gap-2 bg-sky-600 text-white hover:bg-sky-700 h-9 sm:h-10 px-3 sm:px-4"
             >
-              <Plus className="h-4 w-4" />
-              Nuevo Huésped
+              <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="text-xs sm:text-sm">{t('guestManager.nuevoHuesped')}</span>
             </Button>
           </div>
         </div>
@@ -180,7 +182,7 @@ export function GuestManager({ guests }: GuestManagerProps) {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
           <Input
-            placeholder="Buscar por nombre o email..."
+            placeholder={t('guestManager.buscar')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="border-zinc-700 bg-zinc-800 pl-9 text-white placeholder:text-zinc-500"
@@ -202,14 +204,14 @@ export function GuestManager({ guests }: GuestManagerProps) {
       </div>
 
       <div className="flex-1 overflow-auto p-4 lg:p-6">
-        <div className="rounded-lg border border-zinc-800">
+        <div className="overflow-x-auto rounded-lg border border-zinc-800">
           <Table>
             <TableHeader>
               <TableRow className="border-zinc-800 hover:bg-transparent">
-                <TableHead className="text-zinc-400">Nombre</TableHead>
-                <TableHead className="text-zinc-400">Email</TableHead>
-                <TableHead className="text-zinc-400">Teléfono</TableHead>
-                <TableHead className="text-zinc-400">Registro</TableHead>
+                <TableHead className="text-zinc-400 text-xs sm:text-sm">{t('guestManager.nombre')}</TableHead>
+                <TableHead className="hidden md:table-cell text-zinc-400 text-xs sm:text-sm">{t('guestManager.email')}</TableHead>
+                <TableHead className="hidden md:table-cell text-zinc-400 text-xs sm:text-sm">{t('guestManager.telefono')}</TableHead>
+                <TableHead className="hidden md:table-cell text-zinc-400 text-xs sm:text-sm">{t('guestManager.registro')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -226,7 +228,7 @@ export function GuestManager({ guests }: GuestManagerProps) {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <div className="flex items-center gap-2 text-zinc-300">
                       <Mail className="h-3.5 w-3.5 text-zinc-500" />
                       {guest.email || (
@@ -234,7 +236,7 @@ export function GuestManager({ guests }: GuestManagerProps) {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <div className="flex items-center gap-2 text-zinc-300">
                       <Phone className="h-3.5 w-3.5 text-zinc-500" />
                       {guest.telefono || (
@@ -242,7 +244,7 @@ export function GuestManager({ guests }: GuestManagerProps) {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <div className="flex items-center gap-2 text-zinc-400">
                       <CalendarDays className="h-3.5 w-3.5 text-zinc-500" />
                       {guest.fechaRegistro
@@ -259,8 +261,8 @@ export function GuestManager({ guests }: GuestManagerProps) {
                     className="py-12 text-center text-zinc-500"
                   >
                     {search
-                      ? 'No se encontraron huéspedes con ese criterio.'
-                      : 'No hay huéspedes registrados.'}
+                      ? t('guestManager.sinResultados')
+                      : t('guestManager.sinHuespedes')}
                   </TableCell>
                 </TableRow>
               )}
@@ -273,7 +275,7 @@ export function GuestManager({ guests }: GuestManagerProps) {
         <DialogContent className="max-w-md bg-zinc-900 border-zinc-800 text-white">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">
-              Nuevo Huésped
+              {t('guestManager.nuevoHuespedTitle')}
             </DialogTitle>
           </DialogHeader>
 
@@ -287,7 +289,7 @@ export function GuestManager({ guests }: GuestManagerProps) {
 
             <div className="space-y-2">
               <Label htmlFor="gNombre" className="text-zinc-300">
-                Nombre completo
+                {t('guestManager.nombreCompleto')}
               </Label>
               <Input
                 id="gNombre"
@@ -295,7 +297,7 @@ export function GuestManager({ guests }: GuestManagerProps) {
                 onChange={(e) =>
                   setForm((f) => ({ ...f, nombre: e.target.value }))
                 }
-                placeholder="Juan Pérez"
+                placeholder={t('guestManager.nombrePlaceholder')}
                 className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500"
                 required
               />
@@ -303,7 +305,7 @@ export function GuestManager({ guests }: GuestManagerProps) {
 
             <div className="space-y-2">
               <Label htmlFor="gEmail" className="text-zinc-300">
-                Email
+                {t('guestManager.email')}
               </Label>
               <Input
                 id="gEmail"
@@ -312,14 +314,14 @@ export function GuestManager({ guests }: GuestManagerProps) {
                 onChange={(e) =>
                   setForm((f) => ({ ...f, email: e.target.value }))
                 }
-                placeholder="juan@email.com"
+                placeholder={t('guestManager.emailPlaceholder')}
                 className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500"
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="gTelefono" className="text-zinc-300">
-                Teléfono
+                {t('guestManager.telefono')}
               </Label>
               <Input
                 id="gTelefono"
@@ -327,7 +329,7 @@ export function GuestManager({ guests }: GuestManagerProps) {
                 onChange={(e) =>
                   setForm((f) => ({ ...f, telefono: e.target.value }))
                 }
-                placeholder="+54 11 1234-5678"
+                placeholder={t('guestManager.telefonoPlaceholder')}
                 className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500"
               />
             </div>
@@ -349,10 +351,10 @@ export function GuestManager({ guests }: GuestManagerProps) {
                 {saving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Guardando...
+                    {t('guestManager.guardando')}
                   </>
                 ) : (
-                  'Crear Huésped'
+                  t('guestManager.crearHuesped')
                 )}
               </Button>
             </div>

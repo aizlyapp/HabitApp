@@ -31,8 +31,14 @@
   * {
     @apply border-border;
   }
+
+  html {
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-zinc-950 text-white antialiased;
+    overflow-x: hidden;
   }
 }
 
@@ -68,8 +74,15 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 
 /* Fade in animation for views */
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fade-in {
@@ -78,9 +91,17 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 
 /* Scale press for buttons */
 @keyframes press {
-  0% { transform: scale(1); }
-  50% { transform: scale(0.97); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(0.97);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .animate-press:active {

@@ -15,15 +15,26 @@ import {
   useUpdateReservationMutation,
   useDeleteReservationMutation,
 } from '@/lib/data/queries';
+import { getSubscriptionFromMetadata, isSubscriptionActive } from '@/lib/subscription';
+
+const EXPIRED_MSG = 'Tu período de prueba terminó. Suscribite para seguir operando.';
 
 export function useReservations() {
   const queryClient = useQueryClient();
   const supabase = createClient();
   const [userId, setUserId] = useState<string | null>(null);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<boolean | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user?.id) setUserId(user.id);
+      if (user?.id) {
+        setUserId(user.id);
+        const metadata = user.user_metadata as { subscription?: string };
+        const sub = getSubscriptionFromMetadata(metadata);
+        setSubscriptionBlocked(!isSubscriptionActive(sub));
+      } else {
+        setSubscriptionBlocked(null);
+      }
     });
   }, [supabase]);
 
@@ -47,6 +58,13 @@ export function useReservations() {
         : guestsQuery.error instanceof Error
           ? guestsQuery.error.message
           : null;
+
+  const checkSubscriptionBlocked = useCallback(() => {
+    if (subscriptionBlocked === true) {
+      return { success: false, error: EXPIRED_MSG } as const;
+    }
+    return null;
+  }, [subscriptionBlocked]);
 
   const refetch = useCallback(async () => {
     await Promise.all([
@@ -72,6 +90,9 @@ export function useReservations() {
   const createReservation = useCallback(
     async (reservation: Omit<ReservationInsert, 'id' | 'created_at'>) => {
       if (!userId) return { success: false, error: 'Usuario no autenticado' } as const;
+
+      const blocked = checkSubscriptionBlocked();
+      if (blocked) return blocked;
 
       const checkIn = parseDate(reservation.check_in);
       const checkOut = parseDate(reservation.check_out);
@@ -103,12 +124,15 @@ export function useReservations() {
         } as const;
       }
     },
-    [userId, isRoomAvailable, rooms, createReservationMutation]
+    [userId, isRoomAvailable, rooms, createReservationMutation, checkSubscriptionBlocked]
   );
 
   const updateReservation = useCallback(
     async (id: string, updates: Partial<Reservation>) => {
       if (!userId) return { success: false, error: 'Usuario no autenticado' } as const;
+
+      const blocked = checkSubscriptionBlocked();
+      if (blocked) return blocked;
 
       if (updates.check_in && updates.check_out) {
         const checkIn = parseDate(updates.check_in);
@@ -144,12 +168,16 @@ export function useReservations() {
         } as const;
       }
     },
-    [userId, isRoomAvailable, rooms, reservations, updateReservationMutation]
+    [userId, isRoomAvailable, rooms, reservations, updateReservationMutation, checkSubscriptionBlocked]
   );
 
   const deleteReservation = useCallback(
     async (id: string) => {
       if (!userId) return { success: false, error: 'Usuario no autenticado' } as const;
+
+      const blocked = checkSubscriptionBlocked();
+      if (blocked) return blocked;
+
       try {
         await deleteReservationMutation.mutateAsync(id);
         return { success: true } as const;
@@ -160,7 +188,7 @@ export function useReservations() {
         } as const;
       }
     },
-    [userId, deleteReservationMutation]
+    [userId, deleteReservationMutation, checkSubscriptionBlocked]
   );
 
   const cancelReservation = useCallback(
@@ -173,6 +201,9 @@ export function useReservations() {
   const updateRoomStatus = useCallback(
     async (roomId: string, status: string) => {
       if (!userId) return { success: false, error: 'Usuario no autenticado' } as const;
+
+      const blocked = checkSubscriptionBlocked();
+      if (blocked) return blocked;
 
       const prev = queryClient.getQueryData<Room[]>(queryKeys.rooms);
 
@@ -193,12 +224,15 @@ export function useReservations() {
         } as const;
       }
     },
-    [userId, queryClient]
+    [userId, queryClient, checkSubscriptionBlocked]
   );
 
   const updateCleaningStatus = useCallback(
     async (roomId: string, cleaningStatus: string) => {
       if (!userId) return { success: false, error: 'Usuario no autenticado' } as const;
+
+      const blocked = checkSubscriptionBlocked();
+      if (blocked) return blocked;
 
       const prev = queryClient.getQueryData<Room[]>(queryKeys.rooms);
 
@@ -223,12 +257,15 @@ export function useReservations() {
         } as const;
       }
     },
-    [userId, queryClient]
+    [userId, queryClient, checkSubscriptionBlocked]
   );
 
   const checkIn = useCallback(
     async (reservationId: string) => {
       if (!userId) return { success: false, error: 'Usuario no autenticado' } as const;
+
+      const blocked = checkSubscriptionBlocked();
+      if (blocked) return blocked;
 
       const reservation = reservations.find((r) => r.id === reservationId);
       if (!reservation) {
@@ -272,12 +309,15 @@ export function useReservations() {
         } as const;
       }
     },
-    [userId, reservations, queryClient]
+    [userId, reservations, queryClient, checkSubscriptionBlocked]
   );
 
   const checkOut = useCallback(
     async (reservationId: string) => {
       if (!userId) return { success: false, error: 'Usuario no autenticado' } as const;
+
+      const blocked = checkSubscriptionBlocked();
+      if (blocked) return blocked;
 
       const reservation = reservations.find((r) => r.id === reservationId);
       if (!reservation) {
@@ -322,12 +362,15 @@ export function useReservations() {
         } as const;
       }
     },
-    [userId, reservations, queryClient]
+    [userId, reservations, queryClient, checkSubscriptionBlocked]
   );
 
   const updatePaymentStatus = useCallback(
     async (reservationId: string, paymentStatus: PaymentStatus) => {
       if (!userId) return { success: false, error: 'Usuario no autenticado' } as const;
+
+      const blocked = checkSubscriptionBlocked();
+      if (blocked) return blocked;
 
       const prev = queryClient.getQueryData<Reservation[]>(queryKeys.reservations);
 
@@ -351,7 +394,7 @@ export function useReservations() {
         } as const;
       }
     },
-    [userId, queryClient]
+    [userId, queryClient, checkSubscriptionBlocked]
   );
 
   return {

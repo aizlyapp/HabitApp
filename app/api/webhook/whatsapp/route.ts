@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import Groq from 'groq-sdk';
+import { checkSubscriptionServer } from '@/lib/subscription-server';
 
 const SYSTEM_PROMPT_TEMPLATE = `
 Sos el asistente virtual de {HOSTEL_NOMBRE}, ubicado en {HOSTEL_DIRECCION}. Tu trabajo es responder consultas de huéspedes potenciales y ayudarlos a hacer reservas.
@@ -261,6 +262,23 @@ async function processWhatsAppMessage(body: any) {
       console.warn('⚠️ Sin userId en config — respondiendo mensaje genérico');
       await sendWhatsAppMessage(token, phoneNumberId, from, '¡Gracias por tu mensaje! En breve te responderemos.');
       return;
+    }
+
+    // ── 3b-bis. Suscripción expirada → bloquear chatbot ─────────────
+    try {
+      const subStatus = await checkSubscriptionServer(userId);
+      if (!subStatus.active) {
+        console.warn('⚠️ Suscripción expirada — chatbot bloqueado para userId', userId);
+        await sendWhatsAppMessage(
+          token,
+          phoneNumberId,
+          from,
+          'Lo siento, el hostel no está aceptando reservas en este momento. Por favor intentá más tarde.'
+        );
+        return;
+      }
+    } catch (subErr) {
+      console.error('❌ Error al verificar suscripción:', subErr);
     }
 
     // ── 3c. Obtener datos del hostel ────────────────────────────────

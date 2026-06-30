@@ -1,7 +1,7 @@
-import MercadoPagoConfig, { Preapproval } from 'mercadopago';
+import MercadoPagoConfig, { PreApproval } from 'mercadopago';
 
 let client: MercadoPagoConfig | null = null;
-let preapproval: Preapproval | null = null;
+let preapproval: PreApproval | null = null;
 
 export function getMercadoPagoClient(): MercadoPagoConfig {
   if (!client) {
@@ -12,14 +12,14 @@ export function getMercadoPagoClient(): MercadoPagoConfig {
   return client;
 }
 
-export function getPreapproval(): Preapproval {
+export function getPreapproval(): PreApproval {
   if (!preapproval) {
-    preapproval = new Preapproval(getMercadoPagoClient());
+    preapproval = new PreApproval(getMercadoPagoClient());
   }
   return preapproval;
 }
 
-const PRICE_ARS = 120000; // ~$99 USD en ARS aproximado
+const PRICE_ARS = 75000; // ~$50 USD en ARS
 
 export async function createSubscriptionPreapproval(
   payerEmail: string,
@@ -30,7 +30,6 @@ export async function createSubscriptionPreapproval(
 
   const result = await mp.create({
     body: {
-      preapproval_plan_id: null, // sin plan fijo, creamos una suscripción individual
       reason: 'Roomy Pro - Suscripción mensual',
       external_reference: externalReference, // user_id
       payer_email: payerEmail,

@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const email = user.email || '';
-    const origin = request.headers.get('origin') || 'https://aizlyhabitapp.vercel.app';
+    const origin = request.headers.get('origin') || 'https://app.roomy.com.ar';
 
     const result = await createSubscriptionPreapproval(
       email,

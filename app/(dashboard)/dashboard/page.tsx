@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { AlertTriangle, Clock } from 'lucide-react';
 import { Sidebar } from '@/components/sidebar';
 import { createClient } from '@/lib/supabase/client';
+import { getSubscriptionFromMetadata, isSubscriptionActive, getTrialDaysLeft } from '@/lib/subscription';
 import { BookingCalendar } from '@/components/booking-calendar';
 import { BookingModal } from '@/components/booking-modal';
 import { BookingDetailDrawer } from '@/components/booking-detail-drawer';
@@ -19,10 +21,12 @@ import type { Room, Reservation, ReservationInsert, Guest, PaymentStatus } from 
 import { queryKeys } from '@/lib/data/queries';
 import * as repo from '@/lib/data/repository';
 import { toast } from '@/hooks/use-toast';
+import { useTranslation } from '@/lib/i18n/context';
 
 function HotelsPMSContent() {
   const queryClient = useQueryClient();
   const supabase = createClient();
+  const { t } = useTranslation();
   const [userId, setUserId] = useState<string | null>(null);
   const [activeView, setActiveView] = useState('calendar');
   const [modalOpen, setModalOpen] = useState(false);
@@ -31,10 +35,19 @@ function HotelsPMSContent() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedBooking, setSelectedBooking] = useState<Reservation | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
+  const [subscriptionExpired, setSubscriptionExpired] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user?.id) setUserId(user.id);
+      if (user?.id) {
+        setUserId(user.id);
+        const metadata = user.user_metadata as { subscription?: string };
+        const sub = getSubscriptionFromMetadata(metadata);
+        const active = isSubscriptionActive(sub);
+        setSubscriptionExpired(!active && sub.plan === 'trial');
+        setTrialDaysLeft(active && sub.plan === 'trial' ? getTrialDaysLeft(sub) : null);
+      }
     });
   }, [supabase]);
 
@@ -86,8 +99,8 @@ function HotelsPMSContent() {
 
       if (result.success) {
         toast({
-          title: 'Reserva actualizada',
-          description: `Reserva para ${booking.guest_name} actualizada exitosamente.`,
+          title: t('page.reservaActualizada'),
+          description: t('page.reservaActualizadaDesc', { name: booking.guest_name }),
         });
         setSelectedBooking(null);
       }
@@ -123,8 +136,8 @@ function HotelsPMSContent() {
 
     if (result.success) {
       toast({
-        title: 'Reserva creada',
-        description: `Reserva para ${booking.guest_name} creada exitosamente.`,
+        title: t('page.reservaCreada'),
+        description: t('page.reservaCreadaDesc', { name: booking.guest_name }),
       });
     }
 
@@ -146,26 +159,26 @@ function HotelsPMSContent() {
   };
 
   const handleCheckIn = async () => {
-    if (!selectedBooking) return { success: false, error: 'No hay reserva seleccionada' };
+    if (!selectedBooking) return { success: false, error: t('page.noHayReserva') };
     const result = await checkIn(selectedBooking.id);
     if (result.success) {
       const room = rooms.find((r) => r.id === selectedBooking.room_id);
       toast({
-        title: 'Check-in registrado',
-        description: `${selectedBooking.guest_name} ha hecho check-in en ${room?.nombre}`,
+        title: t('page.checkinRegistrado'),
+        description: t('page.checkinDesc', { name: selectedBooking.guest_name, room: room?.nombre || selectedBooking.room_id }),
       });
     }
     return result;
   };
 
   const handleCheckOut = async () => {
-    if (!selectedBooking) return { success: false, error: 'No hay reserva seleccionada' };
+    if (!selectedBooking) return { success: false, error: t('page.noHayReserva') };
     const result = await checkOut(selectedBooking.id);
     if (result.success) {
       const room = rooms.find((r) => r.id === selectedBooking.room_id);
       toast({
-        title: 'Check-out registrado',
-        description: `${selectedBooking.guest_name} ha hecho check-out. La habitación ${room?.nombre} está sucia y necesita limpieza.`,
+        title: t('page.checkoutRegistrado'),
+        description: t('page.checkoutDesc', { name: selectedBooking.guest_name, room: room?.nombre || selectedBooking.room_id }),
       });
       setSelectedBooking(null);
     }
@@ -173,12 +186,12 @@ function HotelsPMSContent() {
   };
 
   const handleCancelBooking = async () => {
-    if (!selectedBooking) return { success: false, error: 'No hay reserva seleccionada' };
+    if (!selectedBooking) return { success: false, error: t('page.noHayReserva') };
     const result = await cancelReservation(selectedBooking.id);
     if (result.success) {
       toast({
-        title: 'Reserva cancelada',
-        description: `La reserva de ${selectedBooking.guest_name} ha sido cancelada.`,
+        title: t('page.reservaCancelada'),
+        description: t('page.reservaCanceladaDesc', { name: selectedBooking.guest_name }),
       });
       setSelectedBooking(null);
     }
@@ -186,7 +199,7 @@ function HotelsPMSContent() {
   };
 
   const handleUpdatePaymentStatus = async (paymentStatus: PaymentStatus) => {
-    if (!selectedBooking) return { success: false, error: 'No hay reserva seleccionada' };
+    if (!selectedBooking) return { success: false, error: t('page.noHayReserva') };
     const result = await updatePaymentStatus(selectedBooking.id, paymentStatus);
     if (result.success && selectedBooking) {
       setSelectedBooking({ ...selectedBooking, payment_status: paymentStatus });
@@ -198,8 +211,8 @@ function HotelsPMSContent() {
     const result = await updateCleaningStatus(roomId, status);
     if (result.success) {
       toast({
-        title: 'Estado actualizado',
-        description: 'El estado de limpieza ha sido actualizado.',
+        title: t('page.estadoActualizado'),
+        description: t('page.estadoActualizadoDesc'),
       });
     }
     return result;
@@ -223,7 +236,7 @@ function HotelsPMSContent() {
               onClick={() => window.location.reload()}
               className="text-sky-400 hover:underline"
             >
-              Reintentar
+              {t('page.reintentar')}
             </button>
           </div>
         </div>
@@ -284,6 +297,28 @@ function HotelsPMSContent() {
         <Sidebar activeView={activeView} onViewChange={setActiveView} />
       }
     >
+      {subscriptionExpired && (
+        <div className="mb-4 flex items-center gap-3 rounded-lg border border-rose-800/50 bg-rose-950/50 px-4 py-3">
+          <AlertTriangle className="h-5 w-5 shrink-0 text-rose-400" />
+          <div className="flex-1 text-sm text-rose-200">
+            {t('page.pruebaTerminada')}{' '}
+            <a href="/suscripcion" className="font-medium text-rose-300 underline hover:text-rose-200">
+              {t('page.suscribiteParaOperar')}
+            </a>
+          </div>
+        </div>
+      )}
+      {trialDaysLeft !== null && trialDaysLeft <= 5 && trialDaysLeft > 0 && (
+        <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-800/50 bg-amber-950/50 px-4 py-3">
+          <Clock className="h-5 w-5 shrink-0 text-amber-400" />
+          <div className="flex-1 text-sm text-amber-200">
+            {trialDaysLeft === 1 ? t('page.teQueda') : t('page.teQuedan')} <span className="font-semibold">{trialDaysLeft}</span> {trialDaysLeft === 1 ? t('page.diaPrueba') : t('page.diasPrueba')}{' '}
+            <a href="/suscripcion" className="font-medium text-amber-300 underline hover:text-amber-200">
+              {t('page.suscribiteNoPierdas')}
+            </a>
+          </div>
+        </div>
+      )}
       <div key={activeView} className="animate-fade-in">
         {renderContent()}
       </div>

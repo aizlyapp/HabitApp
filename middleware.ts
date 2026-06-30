@@ -3,7 +3,34 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
+  const { pathname } = request.nextUrl;
+  const hostname = request.nextUrl.hostname;
+  const isDashboardHost =
+    hostname === 'app.roomy.com.ar' || hostname === 'localhost' || hostname === '127.0.0.1';
 
+  // Skip middleware for static files, API routes, etc.
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/public') ||
+    /\.(svg|png|jpg|jpeg|gif|webp|ico|txt|xml|json)$/.test(pathname)
+  ) {
+    return supabaseResponse;
+  }
+
+  // Dashboard host → rewrite / to /dashboard (the actual PMS page)
+  if (isDashboardHost && pathname === '/') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/dashboard';
+    return NextResponse.rewrite(url);
+  }
+
+  // Landing host → let all through (no auth needed)
+  if (!isDashboardHost) {
+    return supabaseResponse;
+  }
+
+  // ===== Dashboard host auth check =====
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -16,24 +43,29 @@ export async function middleware(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, options),
           );
         },
       },
-    }
+    },
   );
 
-  const isPublicApi = request.nextUrl.pathname.startsWith('/api/webhook') || request.nextUrl.pathname.startsWith('/api/diagnose-whatsapp');
+  const isPublicApi =
+    pathname.startsWith('/api/webhook') ||
+    pathname.startsWith('/api/diagnose-whatsapp') ||
+    pathname.startsWith('/api/og') ||
+    pathname.startsWith('/api/landing-chat');
   if (isPublicApi) return supabaseResponse;
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthPage = request.nextUrl.pathname.startsWith('/auth');
-  const isRoot = request.nextUrl.pathname === '/';
+  const isAuthPage = pathname.startsWith('/auth');
+  const isProtectedRoute =
+    pathname.startsWith('/dashboard') || pathname.startsWith('/suscripcion');
 
-  if (!user && !isAuthPage) {
+  if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth';
     return NextResponse.redirect(url);
@@ -41,7 +73,7 @@ export async function middleware(request: NextRequest) {
 
   if (user && isAuthPage) {
     const url = request.nextUrl.clone();
-    url.pathname = '/';
+    url.pathname = '/dashboard';
     return NextResponse.redirect(url);
   }
 
@@ -50,6 +82,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api/webhook|api/diagnose-whatsapp|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/og|api/webhook|api/diagnose-whatsapp|api/landing-chat|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

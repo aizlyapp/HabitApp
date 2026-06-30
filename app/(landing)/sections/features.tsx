@@ -39,9 +39,9 @@ export default function Features() {
     <section className="l-solution" id="features">
       <div className="l-container">
         <h2 className="section-title fade-in">{t('landing.features_title')}</h2>
-        <p className="features-seo-text fade-in">
-          {t('landing.features_seo')}
-        </p>
+<p className="features-seo-text fade-in">
+           {t('landing.features_seo')}
+         </p>
         <div className="features-grid">
           {features.map((f, i) => (
             <div key={i} className="feature-card fade-in">

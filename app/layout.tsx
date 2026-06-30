@@ -1,17 +1,22 @@
 import './globals.css';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { QueryProvider } from '@/components/query-provider';
+import { LanguageProvider } from '@/lib/i18n/context';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Roomy · PMS para Hoteles y Hostels',
-  description: 'Roomy — Sistema de gestión para hoteles boutique y hostels',
+  metadataBase: new URL('https://app.roomy.com.ar'),
   icons: {
     icon: '/favicon.svg',
     apple: '/logo-192.svg',
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -22,7 +27,9 @@ export default function RootLayout({
   return (
     <html lang="es" className="dark">
       <body className={inter.className}>
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <LanguageProvider>{children}</LanguageProvider>
+        </QueryProvider>
       </body>
     </html>
   );

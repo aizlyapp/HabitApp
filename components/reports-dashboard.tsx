@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { format, isToday, isTomorrow, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useTranslation } from '@/lib/i18n/context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -23,6 +24,7 @@ interface ReportsDashboardProps {
 }
 
 export function ReportsDashboard({ rooms, reservations }: ReportsDashboardProps) {
+  const { t } = useTranslation();
   const stats = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -101,8 +103,8 @@ export function ReportsDashboard({ rooms, reservations }: ReportsDashboardProps)
     <div className="flex h-full flex-col overflow-auto">
       {/* Header */}
       <div className="border-b border-zinc-800 p-4 lg:p-6">
-        <h1 className="text-2xl font-semibold text-white">Reportes</h1>
-        <p className="text-sm text-zinc-400 mt-1">
+        <h1 className="text-xl sm:text-2xl font-semibold text-white">{t('reports.title')}</h1>
+        <p className="text-xs sm:text-sm text-zinc-400 mt-1">
           {format(new Date(), "d 'de' MMMM, yyyy", { locale: es })}
         </p>
       </div>
@@ -114,16 +116,16 @@ export function ReportsDashboard({ rooms, reservations }: ReportsDashboardProps)
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
                 <BedDouble className="h-4 w-4" />
-                Ocupación Actual
+                {t('reports.ocupacionActual')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
-                <span className="text-4xl font-bold text-white">
+                <span className="text-2xl sm:text-4xl font-bold text-white">
                   {stats.occupancyRate}%
                 </span>
                 <span className="text-sm text-zinc-500 mb-1">
-                  ({stats.occupiedRooms}/{stats.totalRooms} habitaciones)
+                  {t('reports.habitacionesCount', { occupied: stats.occupiedRooms, total: stats.totalRooms })}
                 </span>
               </div>
               <div className="mt-3 h-2 w-full rounded-full bg-zinc-800">
@@ -140,22 +142,22 @@ export function ReportsDashboard({ rooms, reservations }: ReportsDashboardProps)
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
                 <DollarSign className="h-4 w-4" />
-                Ingresos del Mes
+                {t('reports.ingresosMes')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
-                <span className="text-4xl font-bold text-white">
+                <span className="text-xl sm:text-4xl font-bold text-white break-all">
                   ${stats.monthlyRevenue.toLocaleString('es-AR')}
                 </span>
               </div>
               <div className="mt-2 flex items-center gap-3 text-xs">
                 <span className="text-emerald-400 font-medium">
-                  ${stats.collectedRevenue.toLocaleString('es-AR')} cobrados
+                  ${stats.collectedRevenue.toLocaleString('es-AR')} {t('reports.cobrados')}
                 </span>
                 <span className="text-zinc-600">|</span>
                 <span className="text-amber-400">
-                  ${(stats.monthlyRevenue - stats.collectedRevenue).toLocaleString('es-AR')} pendientes
+                  ${(stats.monthlyRevenue - stats.collectedRevenue).toLocaleString('es-AR')} {t('reports.pendientes')}
                 </span>
               </div>
               <div className="mt-2 h-1.5 w-full rounded-full bg-zinc-800">
@@ -174,28 +176,28 @@ export function ReportsDashboard({ rooms, reservations }: ReportsDashboardProps)
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
-                Estado de Limpieza
+                {t('reports.estadoLimpieza')}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-4">
+              <div className="flex gap-4 sm:gap-6 justify-center sm:justify-start">
                 <div className="flex flex-col items-center">
-                  <span className="text-2xl font-bold text-emerald-400">
+                  <span className="text-xl sm:text-2xl font-bold text-emerald-400">
                     {stats.cleanRooms}
                   </span>
-                  <span className="text-xs text-zinc-500">Limpias</span>
+                  <span className="text-[10px] sm:text-xs text-zinc-500">{t('reports.limpias')}</span>
                 </div>
                 <div className="flex flex-col items-center">
-                  <span className="text-2xl font-bold text-rose-400">
+                  <span className="text-xl sm:text-2xl font-bold text-rose-400">
                     {stats.dirtyRooms}
                   </span>
-                  <span className="text-xs text-zinc-500">Sucias</span>
+                  <span className="text-[10px] sm:text-xs text-zinc-500">{t('reports.sucias')}</span>
                 </div>
                 <div className="flex flex-col items-center">
-                  <span className="text-2xl font-bold text-amber-400">
+                  <span className="text-xl sm:text-2xl font-bold text-amber-400">
                     {stats.inProgressRooms}
                   </span>
-                  <span className="text-xs text-zinc-500">En proceso</span>
+                  <span className="text-xs text-zinc-500">{t('reports.enProceso')}</span>
                 </div>
               </div>
             </CardContent>
@@ -209,12 +211,12 @@ export function ReportsDashboard({ rooms, reservations }: ReportsDashboardProps)
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-zinc-300 flex items-center gap-2">
                 <CalendarCheck className="h-4 w-4 text-emerald-400" />
-                Ingresos de Hoy
+                {t('reports.ingresosHoy')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {stats.todayCheckIns.length === 0 ? (
-                <p className="text-sm text-zinc-500">No hay ingresos programados</p>
+                <p className="text-sm text-zinc-500">{t('reports.noIngresos')}</p>
               ) : (
                 stats.todayCheckIns.map((reservation) => {
                   const room = getRoomForReservation(reservation);
@@ -228,11 +230,11 @@ export function ReportsDashboard({ rooms, reservations }: ReportsDashboardProps)
                           {reservation.guest_name}
                         </p>
                         <p className="text-xs text-zinc-500">
-                          Hab. {room?.nombre} • {reservation.guest_phone}
+                          {t('reports.hab')} {room?.nombre} • {reservation.guest_phone}
                         </p>
                       </div>
                       <Badge className="bg-emerald-600/20 text-emerald-400 text-xs">
-                        Pendiente
+                        {t('reports.pendiente')}
                       </Badge>
                     </div>
                   );
@@ -240,7 +242,7 @@ export function ReportsDashboard({ rooms, reservations }: ReportsDashboardProps)
               )}
               {stats.tomorrowCheckIns.length > 0 && (
                 <div className="pt-3 border-t border-zinc-800">
-                  <p className="text-xs text-zinc-500 mb-2">Mañana</p>
+                  <p className="text-xs text-zinc-500 mb-2">{t('reports.manana')}</p>
                   {stats.tomorrowCheckIns.slice(0, 2).map((reservation) => {
                     const room = getRoomForReservation(reservation);
                     return (
@@ -251,7 +253,7 @@ export function ReportsDashboard({ rooms, reservations }: ReportsDashboardProps)
                         <ArrowRight className="h-3 w-3" />
                         <span>{reservation.guest_name}</span>
                         <span className="text-zinc-600">•</span>
-                        <span>Hab. {room?.nombre}</span>
+                        <span>{t('reports.hab')} {room?.nombre}</span>
                       </div>
                     );
                   })}
@@ -265,12 +267,12 @@ export function ReportsDashboard({ rooms, reservations }: ReportsDashboardProps)
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-zinc-300 flex items-center gap-2">
                 <CalendarX className="h-4 w-4 text-amber-400" />
-                Salidas de Hoy
+                {t('reports.salidasHoy')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {stats.todayCheckOuts.length === 0 ? (
-                <p className="text-sm text-zinc-500">No hay salidas programadas</p>
+                <p className="text-sm text-zinc-500">{t('reports.noSalidas')}</p>
               ) : (
                 stats.todayCheckOuts.map((reservation) => {
                   const room = getRoomForReservation(reservation);
@@ -284,11 +286,11 @@ export function ReportsDashboard({ rooms, reservations }: ReportsDashboardProps)
                           {reservation.guest_name}
                         </p>
                         <p className="text-xs text-zinc-500">
-                          Hab. {room?.nombre} • ${reservation.total_amount.toLocaleString('es-AR')}
+                          {t('reports.hab')} {room?.nombre} • ${reservation.total_amount.toLocaleString('es-AR')}
                         </p>
                       </div>
                       <Badge className="bg-amber-600/20 text-amber-400 text-xs">
-                        Pendiente
+                        {t('reports.pendiente')}
                       </Badge>
                     </div>
                   );
@@ -296,7 +298,7 @@ export function ReportsDashboard({ rooms, reservations }: ReportsDashboardProps)
               )}
               {stats.tomorrowCheckOuts.length > 0 && (
                 <div className="pt-3 border-t border-zinc-800">
-                  <p className="text-xs text-zinc-500 mb-2">Mañana</p>
+                  <p className="text-xs text-zinc-500 mb-2">{t('reports.manana')}</p>
                   {stats.tomorrowCheckOuts.slice(0, 2).map((reservation) => {
                     const room = getRoomForReservation(reservation);
                     return (
@@ -307,7 +309,7 @@ export function ReportsDashboard({ rooms, reservations }: ReportsDashboardProps)
                         <ArrowRight className="h-3 w-3" />
                         <span>{reservation.guest_name}</span>
                         <span className="text-zinc-600">•</span>
-                        <span>Hab. {room?.nombre}</span>
+                        <span>{t('reports.hab')} {room?.nombre}</span>
                       </div>
                     );
                   })}

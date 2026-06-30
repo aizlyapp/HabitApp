@@ -6,12 +6,14 @@ import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { BedDouble, Loader2, AlertCircle } from 'lucide-react';
+import { BedDouble, Loader2, AlertCircle, Languages } from 'lucide-react';
 import { createTrialSubscription } from '@/lib/subscription';
+import { useTranslation } from '@/lib/i18n/context';
 
 export default function AuthPage() {
   const router = useRouter();
   const supabase = createClient();
+  const { t, lang, toggleLang } = useTranslation();
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
@@ -38,11 +40,11 @@ export default function AuthPage() {
           },
         });
         if (error) throw error;
-        setError('Revisá tu email para confirmar la cuenta.');
+        setError(t('auth.revisaEmail'));
         setMode('login');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error de autenticación');
+      setError(err instanceof Error ? err.message : t('auth.errorAutenticacion'));
     } finally {
       setLoading(false);
     }
@@ -57,12 +59,11 @@ export default function AuthPage() {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
-          data: { subscription: JSON.stringify(createTrialSubscription()) },
         },
       });
       if (error) throw error;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al conectar con Google');
+      setError(err instanceof Error ? err.message : t('auth.errorGoogle'));
       setLoading(false);
     }
   };
@@ -77,8 +78,19 @@ export default function AuthPage() {
           </div>
           <h1 className="text-2xl font-bold text-white">Roomy</h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Sistema de gestión para hostels y hoteles boutique
+            {t('auth.subtitle')}
           </p>
+        </div>
+
+        {/* Language toggle */}
+        <div className="mb-6 flex justify-center">
+          <button
+            onClick={toggleLang}
+            className="flex items-center gap-2 rounded-lg border border-zinc-800 px-4 py-2 text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
+          >
+            <Languages className="h-4 w-4" />
+            {lang === 'es' ? 'PT' : 'ES'}
+          </button>
         </div>
 
         {/* Form */}
@@ -91,11 +103,11 @@ export default function AuthPage() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-zinc-300">Email</Label>
+            <Label htmlFor="email" className="text-zinc-300">{t('auth.email')}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="tu@email.com"
+              placeholder={t('auth.emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500"
@@ -104,11 +116,11 @@ export default function AuthPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-zinc-300">Contraseña</Label>
+            <Label htmlFor="password" className="text-zinc-300">{t('auth.password')}</Label>
             <Input
               id="password"
               type="password"
-              placeholder="••••••••"
+              placeholder={t('auth.passwordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500"
@@ -124,12 +136,12 @@ export default function AuthPage() {
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {mode === 'login' ? 'Iniciando sesión...' : 'Creando cuenta...'}
+                {mode === 'login' ? t('auth.iniciandoSesion') : t('auth.creandoCuenta')}
               </>
             ) : mode === 'login' ? (
-              'Iniciar sesión'
+              t('auth.iniciarSesion')
             ) : (
-              'Crear cuenta'
+              t('auth.crearCuenta')
             )}
           </Button>
         </form>
@@ -139,7 +151,7 @@ export default function AuthPage() {
             <div className="w-full border-t border-zinc-800" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-zinc-950 px-2 text-zinc-500">o continuá con</span>
+            <span className="bg-zinc-950 px-2 text-zinc-500">{t('auth.oContinuaCon')}</span>
           </div>
         </div>
 
@@ -168,31 +180,31 @@ export default function AuthPage() {
               fill="#EA4335"
             />
           </svg>
-          Continuar con Google
+          {t('auth.continuarConGoogle')}
         </Button>
 
         {/* Toggle mode */}
         <p className="mt-6 text-center text-sm text-zinc-500">
           {mode === 'login' ? (
             <>
-              ¿No tenés cuenta?{' '}
+              {t('auth.noTienesCuenta')}{' '}
               <button
                 type="button"
                 onClick={() => { setMode('register'); setError(null); }}
                 className="text-sky-400 hover:underline"
               >
-                Crear cuenta
+                {t('auth.crearCuenta')}
               </button>
             </>
           ) : (
             <>
-              ¿Ya tenés cuenta?{' '}
+              {t('auth.yaTienesCuenta')}{' '}
               <button
                 type="button"
                 onClick={() => { setMode('login'); setError(null); }}
                 className="text-sky-400 hover:underline"
               >
-                Iniciar sesión
+                {t('auth.iniciarSesion')}
               </button>
             </>
           )}

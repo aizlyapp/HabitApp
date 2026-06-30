@@ -12,8 +12,11 @@ export interface SubscriptionData {
   trialEnd: string;     // ISO date
   subscribedAt?: string;
   expiresAt?: string;
+  lastPaymentAt?: string;
   mpPreapprovalId?: string;
   mpSubscriptionId?: string;
+  paddleTransactionId?: string;
+  paddleSubscriptionId?: string;
 }
 
 const TRIAL_DAYS = 14;
@@ -48,8 +51,13 @@ export function getSubscriptionFromMetadata(metadata: {
       // ignore
     }
   }
-  // Si no hay suscripción, crear una trial
-  return createTrialSubscription();
+  // Sin metadata → trial expirada
+  return {
+    plan: 'trial',
+    status: 'expired',
+    trialStart: new Date(0).toISOString(),
+    trialEnd: new Date(0).toISOString(),
+  };
 }
 
 /**
@@ -79,28 +87,4 @@ export function getTrialDaysLeft(sub: SubscriptionData): number {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
-/**
- * Actualiza la suscripción en los metadatos del usuario
- */
-export async function updateUserSubscription(
-  userId: string,
-  data: Partial<SubscriptionData>
-): Promise<boolean> {
-  const supabase = await import('./supabase/server').then(m => m.createClient());
 
-  // Obtener suscripción actual
-  const { data: user } = await supabase.auth.getUser();
-  if (!user.user) return false;
-
-  const currentSub = getSubscriptionFromMetadata(
-    user.user.user_metadata as { subscription?: string }
-  );
-
-  const updated: SubscriptionData = { ...currentSub, ...data };
-
-  const { error } = await supabase.auth.updateUser({
-    data: { subscription: JSON.stringify(updated) },
-  });
-
-  return !error;
-}
