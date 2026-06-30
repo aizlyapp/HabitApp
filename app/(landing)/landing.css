@@ -1292,13 +1292,13 @@
 
 /* Features SEO paragraph */
 .features-seo-text {
-  color: var(--text-secondary);
-  text-align: center;
-  max-width: 640px;
-  margin: -48px auto 48px;
-  font-size: 15px;
-  line-height: 1.6;
-}
+   color: var(--text-secondary);
+   text-align: center;
+   max-width: 640px;
+   margin: -48px auto 48px;
+   font-size: 15px;
+   line-height: 1.6;
+ }
 
 /* CTA SEO text */
 .cta-seo-text {
@@ -1312,6 +1312,14 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .features-seo-text {
+    margin: 0 auto 48px;
+  }
+  
+  .seo-text {
+    margin: 0 auto 32px;
+  }
+
   .custom-cursor {
     display: none;
   }
@@ -1518,6 +1526,10 @@
 }
 
 @media (max-width: 480px) {
+  .features-seo-text {
+    margin: 0 auto 32px;
+  }
+
   .l-hero {
     padding: 140px 0 32px;
   }
