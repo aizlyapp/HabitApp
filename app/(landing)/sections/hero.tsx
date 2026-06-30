@@ -5,19 +5,10 @@ import { useTranslation } from '@/lib/i18n/context';
 import { useAnimatedCounter } from '../components/landing-hooks';
 
 function CharReveal({ text }: { text: string }) {
-  const chars = Array.from(text);
   return (
-    <>
-      {chars.map((ch, i) => (
-        <span
-          key={i}
-          className="char"
-          style={{ animationDelay: `${i * 40}ms` }}
-        >
-          {ch}
-        </span>
-      ))}
-    </>
+    <span className="char" style={{ animationDelay: '0ms' }}>
+      {text}
+    </span>
   );
 }
 
