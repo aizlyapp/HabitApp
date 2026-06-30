@@ -1407,10 +1407,10 @@
     align-items: center;
     padding: 0 16px;
     letter-spacing: -0.3px;
-    font-size: clamp(20px, 5.5vw, 28px);
-    line-height: 1.35;
+    font-size: clamp(18px, 5.5vw, 28px);
+    line-height: 1.4;
     word-break: break-word;
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
   }
 
   .hero-buttons {
@@ -1514,13 +1514,15 @@
 
 @media (max-width: 480px) {
   .l-hero {
-    padding: 104px 0 32px;
+    padding: 120px 0 32px;
   }
 
   .l-hero-title {
     letter-spacing: -0.3px;
-    font-size: 24px;
-    line-height: 1.25;
+    font-size: clamp(16px, 4.8vw, 22px);
+    line-height: 1.4;
+    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 
   .btn-large {
