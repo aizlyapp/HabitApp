@@ -11,6 +11,7 @@ import {
   subWeeks,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useTranslation } from '@/lib/i18n/context';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,12 +36,6 @@ interface BookingCalendarProps {
   onBookingClick: (booking: Reservation) => void;
 }
 
-const statusConfig: Record<string, { label: string; color: string }> = {
-  available: { label: 'Disponible', color: 'bg-emerald-500/20 text-emerald-400' },
-  occupied: { label: 'Ocupada', color: 'bg-amber-500/20 text-amber-400' },
-  maintenance: { label: 'Mantenimiento', color: 'bg-rose-500/20 text-rose-400' },
-};
-
 const bookingStatusColors: Record<string, string> = {
   confirmed: 'bg-sky-600 hover:bg-sky-700',
   'checked-in': 'bg-emerald-600 hover:bg-emerald-700',
@@ -56,7 +51,15 @@ export function BookingCalendar({
   onBookingClick,
 }: BookingCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [mobileDay, setMobileDay] = useState(new Date());
   const [hoveredRoom, setHoveredRoom] = useState<string | null>(null);
+  const { t, lang } = useTranslation();
+
+  const statusConfig = useMemo(() => ({
+    available: { label: t('calendar.disponible'), color: 'bg-emerald-500/20 text-emerald-400' },
+    occupied: { label: t('calendar.ocupada'), color: 'bg-amber-500/20 text-amber-400' },
+    maintenance: { label: t('calendar.mantenimiento'), color: 'bg-rose-500/20 text-rose-400' },
+  }), [t]);
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekDays = useMemo(() => {
@@ -66,6 +69,9 @@ export function BookingCalendar({
   const previousWeek = () => setCurrentDate(subWeeks(currentDate, 1));
   const nextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
   const goToToday = () => setCurrentDate(new Date());
+  const prevMobileDay = () => setMobileDay(addDays(mobileDay, -1));
+  const nextMobileDay = () => setMobileDay(addDays(mobileDay, 1));
+  const goToMobileToday = () => setMobileDay(new Date());
 
   const getBookingForRoomOnDay = (roomId: string, day: Date): Reservation | null => {
     const dayStr = format(day, 'yyyy-MM-dd');
@@ -105,7 +111,7 @@ export function BookingCalendar({
       <div className="flex h-full items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-zinc-400">
           <Loader2 className="h-8 w-8 animate-spin" />
-          <p>Cargando calendario...</p>
+          <p>{t('calendar.cargando')}</p>
         </div>
       </div>
     );
@@ -113,62 +119,50 @@ export function BookingCalendar({
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="flex flex-col gap-4 border-b border-zinc-800 p-4 lg:p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      {/* Header — Desktop */}
+      <div className="hidden md:flex flex-col gap-4 border-b border-zinc-800 p-4 md:p-6">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-white">Calendario de Reservas</h1>
+            <h1 className="text-2xl font-semibold text-white">{t('calendar.calendarioReservas')}</h1>
             <p className="text-sm text-zinc-400 mt-1">
               {format(currentDate, "MMMM yyyy", { locale: es })}
             </p>
           </div>
-          <Button
-            onClick={() => onNewBooking()}
-            className="bg-sky-600 text-white hover:bg-sky-700 gap-2"
-          >
+          <Button onClick={() => onNewBooking()} className="bg-sky-600 text-white hover:bg-sky-700 gap-2">
             <Plus className="h-4 w-4" />
-            Nueva Reserva
+            {t('calendar.nuevaReserva')}
           </Button>
         </div>
-
-        {/* Week navigation */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={previousWeek}
-              className="text-zinc-400 hover:bg-zinc-800 hover:text-white"
-            >
+            <Button variant="ghost" size="icon" onClick={previousWeek} className="text-zinc-400 hover:bg-zinc-800 hover:text-white">
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={nextWeek}
-              className="text-zinc-400 hover:bg-zinc-800 hover:text-white"
-            >
+            <Button variant="ghost" size="icon" onClick={nextWeek} className="text-zinc-400 hover:bg-zinc-800 hover:text-white">
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={goToToday}
-            className="border-zinc-700 bg-transparent text-zinc-300 hover:bg-zinc-800 hover:text-white"
-          >
-            Hoy
+          <Button variant="outline" size="sm" onClick={goToToday} className="border-zinc-700 bg-transparent text-zinc-300 hover:bg-zinc-800 hover:text-white">
+            {t('calendar.hoy')}
           </Button>
         </div>
       </div>
 
-      {/* Calendar grid */}
-      <div className="flex-1 overflow-auto">
-        <div className="min-w-[800px]">
-          {/* Day headers */}
-          <div className="sticky top-0 z-20 grid grid-cols-[180px_repeat(7,1fr)] border-b border-zinc-800 bg-zinc-900">
+      {/* Header — Mobile */}
+      <div className="md:hidden flex items-center justify-between border-b border-zinc-800 px-3 py-2.5">
+        <h1 className="text-base font-semibold text-white">{t('calendar.calendarioReservas')}</h1>
+        <Button onClick={() => onNewBooking()} className="bg-sky-600 text-white hover:bg-sky-700 gap-1.5 h-10 text-sm px-3">
+          <Plus className="h-3.5 w-3.5" />
+          {t('calendar.nuevaReserva')}
+        </Button>
+      </div>
+
+      {/* Calendar grid — Desktop */}
+      <div className="hidden md:block flex-1 overflow-auto">
+        <div className="min-w-[640px] md:min-w-[800px]">
+          <div className="sticky top-0 z-20 grid grid-cols-[140px_repeat(7,1fr)] md:grid-cols-[180px_repeat(7,1fr)] border-b border-zinc-800 bg-zinc-900">
             <div className="border-r border-zinc-800 p-3 text-sm font-medium text-zinc-400">
-              Habitación
+              {t('calendar.habitacion')}
             </div>
             {weekDays.map((day) => (
               <div
@@ -192,8 +186,6 @@ export function BookingCalendar({
               </div>
             ))}
           </div>
-
-          {/* Room rows */}
           {rooms.map((room) => (
             <div
               key={room.id}
@@ -204,7 +196,6 @@ export function BookingCalendar({
               onMouseEnter={() => setHoveredRoom(room.id)}
               onMouseLeave={() => setHoveredRoom(null)}
             >
-              {/* Room info */}
               <div className="border-r border-zinc-800 p-3">
                 <div className="flex items-center gap-2">
                   <span className="text-base font-semibold text-white">
@@ -223,8 +214,8 @@ export function BookingCalendar({
                       )}
                       title={
                         room.cleaning_status === 'dirty'
-                          ? 'Habitación sucia'
-                          : 'Limpieza en progreso'
+                          ? t('calendar.habSucia')
+                          : t('calendar.limpiezaProgreso')
                       }
                     >
                       {room.cleaning_status === 'dirty' ? (
@@ -235,7 +226,7 @@ export function BookingCalendar({
                     </div>
                   )}
                   {room.cleaning_status === 'clean' && room.status !== 'maintenance' && (
-                    <div title="Limpia">
+                    <div title={t('calendar.limpia')}>
                       <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
                     </div>
                   )}
@@ -251,18 +242,15 @@ export function BookingCalendar({
                 <div className="mt-1 flex items-center gap-2 text-xs text-zinc-500">
                   <BedDouble className="h-3 w-3" />
                   <span>
-                    {room.capacidad} pers.
+                    {room.capacidad} {t('calendar.pers')}
                   </span>
                 </div>
               </div>
-
-              {/* Day cells */}
               {weekDays.map((day) => {
                 const booking = getBookingForRoomOnDay(room.id, day);
                 const checkoutBooking = getCheckoutBookingForRoomOnDay(room.id, day);
                 const showBookingStart = booking && hasBookingStarted(booking, day);
                 const isCheckoutDay = checkoutBooking !== null;
-
                 return (
                   <div
                     key={day.toISOString()}
@@ -281,8 +269,8 @@ export function BookingCalendar({
                     title={
                       isCheckoutDay && checkoutBooking
                         ? booking
-                          ? `Salida: ${checkoutBooking.guest_name} · Entrada: ${booking.guest_name}`
-                          : `Salida: ${checkoutBooking.guest_name} · Entrada disponible`
+                          ? `${t('calendar.salida')}: ${checkoutBooking.guest_name} · ${t('calendar.ingreso')}: ${booking.guest_name}`
+                          : `${t('calendar.salida')}: ${checkoutBooking.guest_name} · ${t('calendar.entradaDisponible')}`
                         : undefined
                     }
                   >
@@ -297,9 +285,7 @@ export function BookingCalendar({
                               : '#1e3a5f',
                           }}
                         >
-                          <span className="ml-1 mt-0.5 text-[10px] font-bold text-white/90 leading-none">
-                            OUT
-                          </span>
+                          <span className="ml-1 mt-0.5 text-[10px] font-bold text-white/90 leading-none">OUT</span>
                         </div>
                         <div
                           className="absolute inset-0 flex items-end justify-end"
@@ -311,28 +297,22 @@ export function BookingCalendar({
                           }}
                         >
                           <span className="mr-1 mb-0.5 text-[10px] font-medium text-white/90 leading-none truncate max-w-[85%]">
-                            {booking ? booking.guest_name : 'LIBRE'}
+                            {booking ? booking.guest_name : t('calendar.libre')}
                           </span>
                         </div>
                       </div>
                     )}
                     {!isCheckoutDay && showBookingStart && booking && (
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onBookingClick(booking);
-                        }}
+                        onClick={(e) => { e.stopPropagation(); onBookingClick(booking); }}
                         className={cn(
                           'w-full rounded px-2 py-1.5 text-left transition-opacity text-white',
                           bookingStatusColors[booking.status]
                         )}
                       >
-                        <div className="text-xs font-medium truncate">
-                          {booking.guest_name}
-                        </div>
+                        <div className="text-xs font-medium truncate">{booking.guest_name}</div>
                         <div className="text-[10px] text-white/70">
-                          {format(new Date(booking.check_in), 'd')} -{' '}
-                          {format(new Date(booking.check_out), 'd')}
+                          {format(new Date(booking.check_in), 'd')} - {format(new Date(booking.check_out), 'd')}
                         </div>
                       </button>
                     )}
@@ -342,7 +322,7 @@ export function BookingCalendar({
                     {!booking && room.status === 'maintenance' && day.getTime() === weekDays[0].getTime() && (
                       <div className="flex items-center gap-1 text-xs text-rose-400 p-2">
                         <Wrench className="h-3 w-3" />
-                        <span>Mantenimiento</span>
+                        <span>{t('calendar.mantenimiento')}</span>
                       </div>
                     )}
                   </div>
@@ -353,25 +333,108 @@ export function BookingCalendar({
         </div>
       </div>
 
+      {/* Mobile day view */}
+      <div className="lg:hidden flex-1 overflow-y-auto">
+        <div className="flex items-center gap-2 border-b border-zinc-800 px-4 py-2.5">
+          <button onClick={prevMobileDay} className="p-1 text-zinc-400 hover:text-white">
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <div className="flex-1 text-center">
+            <span className="text-sm font-medium text-white">{format(mobileDay, "EEE d", { locale: es })}</span>
+            <span className="text-xs text-zinc-500 ml-1">{format(mobileDay, "MMM", { locale: es })}</span>
+          </div>
+          <button onClick={nextMobileDay} className="p-1 text-zinc-400 hover:text-white">
+            <ChevronRight className="h-4 w-4" />
+          </button>
+          <button onClick={goToMobileToday} className="text-xs text-zinc-400 hover:text-white ml-1">
+            {t('calendar.hoy')}
+          </button>
+        </div>
+
+        <div className="divide-y divide-zinc-800/50">
+          {rooms.map((room) => {
+            const booking = getBookingForRoomOnDay(room.id, mobileDay);
+            const checkoutBooking = getCheckoutBookingForRoomOnDay(room.id, mobileDay);
+            return (
+              <div
+                key={room.id}
+                onClick={() => {
+                  if (booking) onBookingClick(booking);
+                  else if (room.status !== 'maintenance') onNewBooking(room, mobileDay);
+                }}
+                className={cn(
+                  'px-4 py-3 active:bg-zinc-800/50 transition-colors',
+                  booking ? 'border-l-2 border-sky-600' : ''
+                )}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm font-medium text-white truncate">{room.nombre}</span>
+                    <Badge className={cn('text-[10px] px-1.5 py-0 shrink-0', statusConfig[room.status]?.color || '')}>
+                      {statusConfig[room.status]?.label || room.status}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {room.cleaning_status === 'dirty' && <AlertTriangle className="h-3 w-3 text-rose-400" />}
+                    {room.cleaning_status === 'in-progress' && <Clock className="h-3 w-3 text-amber-400" />}
+                    {room.cleaning_status === 'clean' && room.status !== 'maintenance' && <Sparkles className="h-3 w-3 text-emerald-400" />}
+                  </div>
+                </div>
+
+                {booking ? (
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0">
+                      <span className="text-xs font-medium text-white">{booking.guest_name}</span>
+                      <span className="text-[10px] text-zinc-500 ml-2">
+                        {format(new Date(booking.check_in), 'd MMM')} → {format(new Date(booking.check_out), 'd MMM')}
+                      </span>
+                    </div>
+                    <Badge variant="outline" className={cn(
+                      'text-[10px] px-1.5 py-0 shrink-0',
+                      booking.status === 'confirmed' ? 'border-sky-600 text-sky-400' :
+                        booking.status === 'checked-in' ? 'border-emerald-600 text-emerald-400' :
+                          booking.status === 'checked-out' ? 'border-zinc-600 text-zinc-400' :
+                            'border-rose-600 text-rose-400'
+                    )}>
+                      {booking.status === 'confirmed' ? t('calendar.confirmada') :
+                        booking.status === 'checked-in' ? t('bookingDrawer.checkinRealizado') :
+                          booking.status === 'checked-out' ? t('bookingDrawer.checkoutRealizado') :
+                            t('bookingDrawer.cancelada')}
+                    </Badge>
+                  </div>
+                ) : room.status === 'maintenance' ? (
+                  <div className="flex items-center gap-1.5 text-xs text-rose-400">
+                    <Wrench className="h-3 w-3" />
+                    <span>{t('calendar.mantenimiento')}</span>
+                  </div>
+                ) : (
+                  <div className="text-xs text-zinc-500">{t('calendar.nuevaReserva')}</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Legend */}
-      <div className="border-t border-zinc-800 p-4">
-        <div className="flex flex-wrap items-center gap-4 text-xs text-zinc-400">
-          <span className="font-medium text-zinc-300">Leyenda:</span>
+      <div className="border-t border-zinc-800 p-3 sm:p-4">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[10px] sm:text-xs text-zinc-400">
+          <span className="font-medium text-zinc-300">{t('calendar.leyenda')}</span>
           <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full bg-emerald-500" />
-            <span>Disponible</span>
+            <div className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+            <span>{t('calendar.disponible')}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full bg-sky-600" />
-            <span>Confirmada</span>
+            <div className="h-2 w-2 rounded-full bg-sky-600 shrink-0" />
+            <span>{t('calendar.confirmada')}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full bg-emerald-600" />
-            <span>Ingreso</span>
+            <div className="h-2 w-2 rounded-full bg-emerald-600 shrink-0" />
+            <span>{t('calendar.ingreso')}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full bg-rose-500" />
-            <span>Mantenimiento</span>
+            <div className="h-2 w-2 rounded-full bg-rose-500 shrink-0" />
+            <span>{t('calendar.mantenimiento')}</span>
           </div>
         </div>
       </div>

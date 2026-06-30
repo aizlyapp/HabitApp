@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from '@/lib/i18n/context';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -51,28 +52,28 @@ interface BookingDetailDrawerProps {
   onUpdatePaymentStatus?: (paymentStatus: PaymentStatus) => Promise<{ success: boolean; error?: string }>;
 }
 
-const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
+const getStatusConfig = (t: (key: string, params?: Record<string, string | number>) => string): Record<string, { label: string; color: string; bgColor: string }> => ({
   confirmed: {
-    label: 'Confirmada',
+    label: t('bookingDrawer.confirmada'),
     color: 'text-sky-400',
     bgColor: 'bg-sky-600/20 text-sky-400',
   },
   'checked-in': {
-    label: 'Check-in realizado',
+    label: t('bookingDrawer.checkinRealizado'),
     color: 'text-emerald-400',
     bgColor: 'bg-emerald-600/20 text-emerald-400',
   },
   'checked-out': {
-    label: 'Check-out realizado',
+    label: t('bookingDrawer.checkoutRealizado'),
     color: 'text-zinc-400',
     bgColor: 'bg-zinc-600/20 text-zinc-400',
   },
   cancelled: {
-    label: 'Cancelada',
+    label: t('bookingDrawer.cancelada'),
     color: 'text-rose-400',
     bgColor: 'bg-rose-600/20 text-rose-400',
   },
-};
+});
 
 export function BookingDetailDrawer({
   open,
@@ -89,6 +90,7 @@ export function BookingDetailDrawer({
   const [error, setError] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [copiedPayment, setCopiedPayment] = useState(false);
+  const { t } = useTranslation();
 
   if (!booking || !room) return null;
 
@@ -102,7 +104,7 @@ export function BookingDetailDrawer({
     if (result.success) {
       onOpenChange(false);
     } else {
-      setError(result.error || 'Error al registrar check-in');
+      setError(result.error || t('bookingDrawer.errorCheckin'));
     }
   };
 
@@ -114,7 +116,7 @@ export function BookingDetailDrawer({
     if (result.success) {
       onOpenChange(false);
     } else {
-      setError(result.error || 'Error al registrar check-out');
+      setError(result.error || t('bookingDrawer.errorCheckout'));
     }
   };
 
@@ -126,15 +128,16 @@ export function BookingDetailDrawer({
     if (result.success) {
       onOpenChange(false);
     } else {
-      setError(result.error || 'Error al cancelar reserva');
+      setError(result.error || t('bookingDrawer.errorCancelar'));
     }
     setShowCancelConfirm(false);
   };
 
+  const statusConfig = getStatusConfig(t);
   const status = statusConfig[booking.status] || statusConfig.confirmed;
   const nights = Math.ceil(
     (new Date(booking.check_out).getTime() - new Date(booking.check_in).getTime()) /
-      (1000 * 60 * 60 * 24)
+    (1000 * 60 * 60 * 24)
   );
   const waNumber = booking.guest_phone.replace(/\D/g, '').replace(/^0/, '54');
 
@@ -149,8 +152,8 @@ export function BookingDetailDrawer({
     const result = await onUpdatePaymentStatus(newStatus);
     setLoading(null);
     if (!result.success) {
-      console.error('Error al cambiar estado de pago:', result.error);
-      setError(result.error || 'Error al actualizar pago');
+      console.error(t('bookingDrawer.errorPago'), result.error);
+      setError(result.error || t('bookingDrawer.errorPago'));
     }
   };
 
@@ -162,9 +165,9 @@ export function BookingDetailDrawer({
   };
 
   const paymentLabels: Record<PaymentStatus, { label: string; color: string }> = {
-    pending: { label: 'Pendiente', color: 'text-amber-400 border-amber-700 bg-amber-500/10' },
-    deposit: { label: 'Seña', color: 'text-sky-400 border-sky-700 bg-sky-500/10' },
-    paid: { label: 'Pagado', color: 'text-emerald-400 border-emerald-700 bg-emerald-500/10' },
+    pending: { label: t('bookingDrawer.pendiente'), color: 'text-amber-400 border-amber-700 bg-amber-500/10' },
+    deposit: { label: t('bookingDrawer.senia'), color: 'text-sky-400 border-sky-700 bg-sky-500/10' },
+    paid: { label: t('bookingDrawer.pagado'), color: 'text-emerald-400 border-emerald-700 bg-emerald-500/10' },
   };
 
   return (
@@ -173,7 +176,7 @@ export function BookingDetailDrawer({
         <SheetHeader className="space-y-3">
           <SheetTitle className="text-xl font-semibold flex items-center gap-2">
             <BedDouble className="h-5 w-5 text-sky-400" />
-            Habitación {room.nombre}
+            {t('bookingDrawer.habitacion', { room: room.nombre })}
           </SheetTitle>
           <SheetDescription className="text-zinc-400">
             {format(new Date(booking.check_in), "d 'de' MMMM", { locale: es })} -{' '}
@@ -198,7 +201,7 @@ export function BookingDetailDrawer({
 
           {/* Guest Info */}
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-zinc-300">Información del huésped</h3>
+            <h3 className="text-sm font-medium text-zinc-300">{t('bookingDrawer.infoHuesped')}</h3>
             <div className="space-y-2.5">
               <div className="flex items-center gap-3 text-sm">
                 <User className="h-4 w-4 text-zinc-500" />
@@ -227,12 +230,12 @@ export function BookingDetailDrawer({
 
           {/* Reservation Details */}
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-zinc-300">Detalles de la reserva</h3>
+            <h3 className="text-sm font-medium text-zinc-300">{t('bookingDrawer.detallesReserva')}</h3>
             <div className="space-y-2.5">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-3">
                   <Calendar className="h-4 w-4 text-zinc-500" />
-                  <span className="text-zinc-400">Estadía</span>
+                  <span className="text-zinc-400">{t('bookingDrawer.estadia')}</span>
                 </div>
                 <span className="text-white">
                   {nights} noche{nights > 1 ? 's' : ''}
@@ -241,7 +244,7 @@ export function BookingDetailDrawer({
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-3">
                   <Users className="h-4 w-4 text-zinc-500" />
-                  <span className="text-zinc-400">Huéspedes</span>
+                  <span className="text-zinc-400">{t('bookingDrawer.huespedes')}</span>
                 </div>
                 <span className="text-white">
                   {booking.guest_count || 1}
@@ -250,14 +253,14 @@ export function BookingDetailDrawer({
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-3">
                   <BedDouble className="h-4 w-4 text-zinc-500" />
-                  <span className="text-zinc-400">Tipo</span>
+                  <span className="text-zinc-400">{t('bookingDrawer.tipo')}</span>
                 </div>
                 <span className="text-white capitalize">{room.tipo}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-3">
                   <DollarSign className="h-4 w-4 text-zinc-500" />
-                  <span className="text-zinc-400">Precio base/pers/noche</span>
+                  <span className="text-zinc-400">{t('bookingDrawer.precioBase')}</span>
                 </div>
                 <span className="text-white">
                   ${room.precioPorNoche.toLocaleString('es-AR')}
@@ -270,7 +273,7 @@ export function BookingDetailDrawer({
 
           {/* Total */}
           <div className="flex items-center justify-between">
-            <span className="text-sm text-zinc-400">Total</span>
+            <span className="text-sm text-zinc-400">{t('bookingDrawer.total')}</span>
             <span className="text-2xl font-semibold text-white">
               ${booking.total_amount.toLocaleString('es-AR')}
             </span>
@@ -283,7 +286,7 @@ export function BookingDetailDrawer({
           <Separator className="bg-zinc-800" />
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-zinc-300">Estado de Pago</h3>
+              <h3 className="text-sm font-medium text-zinc-300">{t('bookingDrawer.estadoPago')}</h3>
               <div className="flex gap-1.5">
                 {(['pending', 'deposit', 'paid'] as PaymentStatus[]).map((ps) => {
                   const pl = paymentLabels[ps];
@@ -293,11 +296,10 @@ export function BookingDetailDrawer({
                       key={ps}
                       onClick={() => handlePaymentStatusChange(ps)}
                       disabled={loading === 'payment'}
-                      className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
-                        active
+                      className={`rounded-md border px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium transition-colors ${active
                           ? pl.color
                           : 'border-zinc-700 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300'
-                      }`}
+                        }`}
                     >
                       {pl.label}
                     </button>
@@ -315,7 +317,7 @@ export function BookingDetailDrawer({
                 <div className="flex items-center gap-2">
                   <CreditCard className="h-4 w-4 text-emerald-400" />
                   <h3 className="text-sm font-medium text-emerald-300">
-                    Información de Cobro
+                    {t('bookingDrawer.infoCobro')}
                   </h3>
                 </div>
                 <button
@@ -327,7 +329,7 @@ export function BookingDetailDrawer({
                   ) : (
                     <Copy className="h-3 w-3" />
                   )}
-                  {copiedPayment ? 'Copiado' : 'Copiar'}
+                  {copiedPayment ? t('bookingDrawer.copiado') : t('bookingDrawer.copiar')}
                 </button>
               </div>
 
@@ -366,14 +368,14 @@ export function BookingDetailDrawer({
                 </div>
               </div>
               <p className="text-center text-[10px] text-zinc-600">
-                Escaneá para pagar
+                {t('bookingDrawer.escaneaPagar')}
               </p>
             </div>
           ) : (
             <div className="rounded-lg border border-dashed border-zinc-700 p-4 text-center">
               <CreditCard className="mx-auto h-5 w-5 text-zinc-600" />
               <p className="mt-2 text-xs text-zinc-500">
-                Configurá tus datos de cobro en Configuración para activar los pagos
+                {t('bookingDrawer.configurarPagos')}
               </p>
             </div>
           )}
@@ -383,7 +385,7 @@ export function BookingDetailDrawer({
             <>
               <Separator className="bg-zinc-800" />
               <div className="space-y-2">
-                <h3 className="text-sm font-medium text-zinc-300">Notas</h3>
+                <h3 className="text-sm font-medium text-zinc-300">{t('bookingDrawer.notas')}</h3>
                 <div className="flex items-start gap-3 text-sm">
                   <FileText className="h-4 w-4 text-zinc-500 mt-0.5" />
                   <span className="text-zinc-300">{booking.notes}</span>
@@ -395,7 +397,7 @@ export function BookingDetailDrawer({
           {/* Actions */}
           <Separator className="bg-zinc-800" />
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-zinc-300">Acciones</h3>
+            <h3 className="text-sm font-medium text-zinc-300">{t('bookingDrawer.acciones')}</h3>
 
             {/* Primary Actions */}
             <div className="grid grid-cols-2 gap-3">
@@ -410,7 +412,7 @@ export function BookingDetailDrawer({
                   ) : (
                     <LogIn className="h-4 w-4 mr-2" />
                   )}
-                  Registrar Ingreso
+                  {t('bookingDrawer.registrarIngreso')}
                 </Button>
               )}
               {canCheckOut && (
@@ -424,12 +426,12 @@ export function BookingDetailDrawer({
                   ) : (
                     <LogOut className="h-4 w-4 mr-2" />
                   )}
-                  Registrar Salida
+                  {t('bookingDrawer.registrarSalida')}
                 </Button>
               )}
               {(booking.status === 'checked-out' || booking.status === 'cancelled') && (
                 <div className="col-span-2 text-center text-sm text-zinc-500 py-2">
-                  Esta reserva ya no puede modificarse
+                  {t('bookingDrawer.noModificable')}
                 </div>
               )}
             </div>
@@ -443,7 +445,7 @@ export function BookingDetailDrawer({
                 className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white active:scale-95 transition-all duration-150"
               >
                 <Edit className="h-4 w-4 mr-2" />
-                Modificar
+                {t('bookingDrawer.modificar')}
               </Button>
 
               {!showCancelConfirm && canCancel && (
@@ -454,14 +456,14 @@ export function BookingDetailDrawer({
                   className="border-rose-700/50 text-rose-400 hover:bg-rose-950/30 active:scale-95 transition-all duration-150"
                 >
                   <XCircle className="h-4 w-4 mr-2" />
-                  Cancelar
+                  {t('bookingDrawer.cancelar')}
                 </Button>
               )}
 
               {showCancelConfirm && (
                 <div className="col-span-2 space-y-2">
                   <p className="text-sm text-rose-400 text-center">
-                    ¿Estás seguro de cancelar esta reserva?
+                    {t('bookingDrawer.confirmarCancelacion')}
                   </p>
                   <div className="flex gap-2">
                     <Button
@@ -470,7 +472,7 @@ export function BookingDetailDrawer({
                       disabled={loading !== null}
                       className="flex-1 text-zinc-400"
                     >
-                      No
+                      {t('bookingDrawer.no')}
                     </Button>
                     <Button
                       onClick={handleCancel}
@@ -482,7 +484,7 @@ export function BookingDetailDrawer({
                       ) : (
                         <Trash2 className="h-4 w-4 mr-2" />
                       )}
-                      Sí, cancelar
+                      {t('bookingDrawer.siCancelar')}
                     </Button>
                   </div>
                 </div>

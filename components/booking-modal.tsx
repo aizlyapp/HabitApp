@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { format, addDays } from 'date-fns';
+import { useTranslation } from '@/lib/i18n/context';
 import {
   Dialog,
   DialogContent,
@@ -65,6 +66,7 @@ export function BookingModal({
   editingBooking,
   onSubmit,
 }: BookingModalProps) {
+  const { t } = useTranslation();
   const defaultCheckOut = selectedDate
     ? format(addDays(selectedDate, 1), 'yyyy-MM-dd')
     : '';
@@ -107,7 +109,7 @@ export function BookingModal({
         const ppp = gc > 0 ? Math.round(editingBooking.total_amount / gc) : editingBooking.total_amount;
         const n = Math.max(1, Math.ceil(
           (new Date(editingBooking.check_out).getTime() - new Date(editingBooking.check_in).getTime()) /
-            (1000 * 60 * 60 * 24)
+          (1000 * 60 * 60 * 24)
         ));
         setFormData({
           room_id: editingBooking.room_id,
@@ -201,19 +203,19 @@ export function BookingModal({
     setError(null);
 
     if (!formData.room_id) {
-      setError('Seleccioná una habitación');
+      setError(t('bookingModal.seleccionaHabitacionError'));
       return;
     }
     if (!formData.guest_name.trim()) {
-      setError('El nombre del huésped es obligatorio');
+      setError(t('bookingModal.nombreObligatorio'));
       return;
     }
     if (!formData.check_in || !formData.check_out) {
-      setError('Las fechas de entrada y salida son obligatorias');
+      setError(t('bookingModal.fechasObligatorias'));
       return;
     }
     if (formData.check_out <= formData.check_in) {
-      setError('La fecha de salida debe ser posterior a la de entrada');
+      setError(t('bookingModal.salidaPosterior'));
       return;
     }
 
@@ -248,7 +250,7 @@ export function BookingModal({
         notes: '',
       });
     } else {
-      setError(result.error || 'Error al crear la reserva');
+      setError(result.error || t('bookingModal.errorCrear'));
     }
   };
 
@@ -257,7 +259,7 @@ export function BookingModal({
       <DialogContent className="max-w-md bg-zinc-900 border-zinc-800 text-white sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">
-            {editingBooking ? 'Modificar Reserva' : 'Nueva Reserva'}
+            {t(editingBooking ? 'bookingModal.modificarReserva' : 'bookingModal.nuevaReserva')}
           </DialogTitle>
         </DialogHeader>
 
@@ -271,7 +273,7 @@ export function BookingModal({
 
           <div className="space-y-2">
             <Label htmlFor="room" className="text-zinc-300">
-              Habitación
+              {t('bookingModal.habitacion')}
             </Label>
             <Select
               value={formData.room_id}
@@ -280,7 +282,7 @@ export function BookingModal({
               }
             >
               <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                <SelectValue placeholder="Seleccionar habitación" />
+                <SelectValue placeholder={t('bookingModal.seleccionarHabitacion')} />
               </SelectTrigger>
               <SelectContent className="bg-zinc-800 border-zinc-700">
                 {rooms.map((room) => (
@@ -296,9 +298,9 @@ export function BookingModal({
             </Select>
           </div>
 
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
             <div className="col-span-2">
-              <label className="text-xs text-zinc-500 block mb-1">Entrada</label>
+              <label className="text-xs text-zinc-500 block mb-1">{t('bookingModal.entrada')}</label>
               <Input
                 type="date"
                 value={formData.check_in}
@@ -307,11 +309,11 @@ export function BookingModal({
                   const upd = recalcFromNights(ci, formData.nights);
                   setFormData({ ...formData, check_in: ci, ...upd });
                 }}
-                className="bg-zinc-800 border-zinc-700 text-white h-9 text-sm"
+                className="bg-zinc-800 border-zinc-700 text-white h-11 text-sm"
               />
             </div>
             <div>
-              <label className="text-xs text-zinc-500 block mb-1">Noches</label>
+              <label className="text-xs text-zinc-500 block mb-1">{t('bookingModal.noches')}</label>
               <div className="flex items-center border border-zinc-700 rounded-md bg-zinc-800">
                 <button
                   type="button"
@@ -320,7 +322,7 @@ export function BookingModal({
                     const upd = recalcFromNights(formData.check_in, n);
                     setFormData({ ...formData, ...upd });
                   }}
-                  className="px-2 h-9 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
+                  className="px-3 h-11 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
                 >
                   -
                 </button>
@@ -334,14 +336,14 @@ export function BookingModal({
                     const upd = recalcFromNights(formData.check_in, n);
                     setFormData({ ...formData, ...upd });
                   }}
-                  className="px-2 h-9 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
+                  className="px-3 h-11 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
                 >
                   +
                 </button>
               </div>
             </div>
             <div className="col-span-2">
-              <label className="text-xs text-zinc-500 block mb-1">Salida</label>
+              <label className="text-xs text-zinc-500 block mb-1">{t('bookingModal.salida')}</label>
               <Input
                 type="date"
                 value={formData.check_out}
@@ -350,7 +352,7 @@ export function BookingModal({
                   const upd = recalcFromCheckOut(formData.check_in, co);
                   setFormData({ ...formData, ...upd });
                 }}
-                className="bg-zinc-800 border-zinc-700 text-white h-9 text-sm"
+                className="bg-zinc-800 border-zinc-700 text-white h-11 text-sm"
               />
             </div>
           </div>
@@ -358,7 +360,7 @@ export function BookingModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="pricePerPerson" className="text-zinc-300">
-                Precio por persona
+                {t('bookingModal.precioPorPersona')}
               </Label>
               <Input
                 id="pricePerPerson"
@@ -374,7 +376,7 @@ export function BookingModal({
             </div>
             <div className="space-y-2">
               <Label htmlFor="guestCount" className="text-zinc-300">
-                Cantidad de personas
+                {t('bookingModal.cantidadPersonas')}
               </Label>
               <Input
                 id="guestCount"
@@ -395,7 +397,7 @@ export function BookingModal({
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-zinc-400">
-                  ${formData.price_per_person.toLocaleString('es-AR')} × {formData.guest_count} pers × {formData.nights} noche{formData.nights !== 1 ? 's' : ''}
+                  ${formData.price_per_person.toLocaleString('es-AR')} × {formData.guest_count} pers × {formData.nights} {t('bookingModal.nochesPlural')}
                 </span>
                 <span className="text-xl font-semibold text-white">
                   ${totalAmount.toLocaleString('es-AR')}
@@ -406,7 +408,7 @@ export function BookingModal({
 
           <div className="space-y-2">
             <Label htmlFor="guestName" className="text-zinc-300">
-              Huésped
+              {t('bookingModal.huesped')}
             </Label>
             <div className="relative">
               <Input
@@ -417,7 +419,7 @@ export function BookingModal({
                 onFocus={() => {
                   if (nameSuggestions.length > 0) setShowSuggestions(true);
                 }}
-                placeholder="Nombre del huésped"
+                placeholder={t('bookingModal.nombreHuesped')}
                 className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
               />
               {showSuggestions && (
@@ -449,7 +451,7 @@ export function BookingModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="guestEmail" className="text-zinc-300">
-                Email
+                {t('bookingModal.email')}
               </Label>
               <Input
                 id="guestEmail"
@@ -458,13 +460,13 @@ export function BookingModal({
                 onChange={(e) =>
                   setFormData({ ...formData, guest_email: e.target.value })
                 }
-                placeholder="juan@email.com"
+                placeholder={t('bookingModal.emailPlaceholder')}
                 className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="guestPhone" className="text-zinc-300">
-                Teléfono
+                {t('bookingModal.telefono')}
               </Label>
               <Input
                 id="guestPhone"
@@ -472,7 +474,7 @@ export function BookingModal({
                 onChange={(e) =>
                   setFormData({ ...formData, guest_phone: e.target.value })
                 }
-                placeholder="+54 11 1234-5678"
+                placeholder={t('bookingModal.telefonoPlaceholder')}
                 className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
               />
             </div>
@@ -480,7 +482,7 @@ export function BookingModal({
 
           <div className="space-y-2">
             <Label htmlFor="notes" className="text-zinc-300">
-              Notas (opcional)
+              {t('bookingModal.notas')}
             </Label>
             <Textarea
               id="notes"
@@ -488,7 +490,7 @@ export function BookingModal({
               onChange={(e) =>
                 setFormData({ ...formData, notes: e.target.value })
               }
-              placeholder="Peticiones especiales..."
+              placeholder={t('bookingModal.notasPlaceholder')}
               className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 resize-none"
               rows={3}
             />
@@ -502,7 +504,7 @@ export function BookingModal({
               disabled={loading}
               className="flex-1 border-zinc-700 bg-transparent text-zinc-300 hover:bg-zinc-800 hover:text-white"
             >
-              Cancelar
+              {t('bookingModal.cancelar')}
             </Button>
             <Button
               type="submit"
@@ -512,10 +514,10 @@ export function BookingModal({
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {editingBooking ? 'Guardando...' : 'Creando...'}
+                  {t(editingBooking ? 'bookingModal.guardando' : 'bookingModal.creando')}
                 </>
               ) : (
-                editingBooking ? 'Guardar Cambios' : 'Crear Reserva'
+                t(editingBooking ? 'bookingModal.guardarCambios' : 'bookingModal.crearReserva')
               )}
             </Button>
           </div>

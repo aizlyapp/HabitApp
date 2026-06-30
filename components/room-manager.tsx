@@ -42,6 +42,7 @@ import { createClient } from '@/lib/supabase/client';
 import type { Room, RoomType, CleaningStatus } from '@/lib/data/types';
 import * as repo from '@/lib/data/repository';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from '@/lib/i18n/context';
 import { queryKeys } from '@/lib/data/queries';
 
 const tipoOptions: RoomType[] = ['Habitación', 'Departamento', 'Cabaña', 'Suite', 'Dormitorio'];
@@ -52,17 +53,11 @@ const cleaningIcons: Record<string, React.ReactNode> = {
   'in-progress': <Clock className="h-3.5 w-3.5 text-amber-400" />,
 };
 
-const cleaningLabels: Record<string, string> = {
-  clean: 'Limpia',
-  dirty: 'Sucia',
-  'in-progress': 'En limpieza',
-};
-
 interface RoomFormData {
   nombre: string;
   tipo: RoomType;
-  precioPorNoche: number;
-  capacidad: number;
+  precioPorNoche: string;
+  capacidad: string;
   permiteMascotas: boolean;
   esPrivada: boolean;
 }
@@ -70,8 +65,8 @@ interface RoomFormData {
 const emptyForm: RoomFormData = {
   nombre: '',
   tipo: 'Habitación',
-  precioPorNoche: 0,
-  capacidad: 2,
+  precioPorNoche: '',
+  capacidad: '',
   permiteMascotas: false,
   esPrivada: true,
 };
@@ -83,6 +78,22 @@ interface RoomManagerProps {
 export function RoomManager({ rooms }: RoomManagerProps) {
   const queryClient = useQueryClient();
   const supabase = createClient();
+  const { t } = useTranslation();
+  const cleaningLabels: Record<string, string> = {
+    clean: t('roomManager.limpia'),
+    dirty: t('roomManager.sucia'),
+    'in-progress': t('roomManager.enLimpieza'),
+  };
+  const tipoLabel = (tipo: string): string => {
+    switch (tipo) {
+      case 'Habitación': return t('roomManager.tipoHabitacion');
+      case 'Departamento': return t('roomManager.tipoDepartamento');
+      case 'Cabaña': return t('roomManager.tipoCabania');
+      case 'Suite': return t('roomManager.tipoSuite');
+      case 'Dormitorio': return t('roomManager.tipoDormitorio');
+      default: return tipo;
+    }
+  };
   const [userId, setUserId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
@@ -108,8 +119,8 @@ export function RoomManager({ rooms }: RoomManagerProps) {
     setForm({
       nombre: room.nombre,
       tipo: room.tipo,
-      precioPorNoche: room.precioPorNoche,
-      capacidad: room.capacidad,
+      precioPorNoche: String(room.precioPorNoche),
+      capacidad: String(room.capacidad),
       permiteMascotas: room.permiteMascotas,
       esPrivada: room.esPrivada,
     });
@@ -123,18 +134,23 @@ export function RoomManager({ rooms }: RoomManagerProps) {
     setError(null);
 
     try {
+      const roomData = {
+        ...form,
+        capacidad: Number(form.capacidad) || 1,
+        precioPorNoche: Number(form.precioPorNoche) || 0,
+      };
       if (editingRoom) {
         await repo.updateRoom(userId, editingRoom.id, {
           ...editingRoom,
-          ...form,
+          ...roomData,
         });
       } else {
-        await repo.insertRoom(userId, form);
+        await repo.insertRoom(userId, roomData);
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.rooms });
       setDialogOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al guardar');
+      setError(err instanceof Error ? err.message : t('roomManager.errorGuardar'));
     } finally {
       setSaving(false);
     }
@@ -142,12 +158,12 @@ export function RoomManager({ rooms }: RoomManagerProps) {
 
   const handleDelete = async (room: Room) => {
     if (!userId) return;
-    if (!confirm(`¿Eliminar habitación ${room.nombre}?`)) return;
+    if (!confirm(t('roomManager.confirmarEliminar', { name: room.nombre }))) return;
     try {
       await repo.removeRoom(userId, room.id);
       queryClient.invalidateQueries({ queryKey: queryKeys.rooms });
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al eliminar');
+      alert(err instanceof Error ? err.message : t('roomManager.errorEliminar'));
     }
   };
 
@@ -158,48 +174,48 @@ export function RoomManager({ rooms }: RoomManagerProps) {
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-zinc-800 p-4 lg:p-6">
         <div>
-          <h1 className="text-2xl font-semibold text-white">Habitaciones</h1>
-          <p className="mt-1 text-sm text-zinc-400">
-            {rooms.length} habitaciones configuradas
+          <h1 className="text-xl sm:text-2xl font-semibold text-white">{t('roomManager.title')}</h1>
+          <p className="mt-1 text-xs sm:text-sm text-zinc-400">
+            {t('roomManager.subtitle', { count: rooms.length })}
           </p>
         </div>
-        <Button onClick={openCreate} className="gap-2 bg-sky-600 text-white hover:bg-sky-700">
-          <Plus className="h-4 w-4" />
-          Nueva Habitación
+        <Button onClick={openCreate} className="gap-2 bg-sky-600 text-white hover:bg-sky-700 shrink-0 h-9 sm:h-10 px-3 sm:px-4">
+          <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <span className="text-xs sm:text-sm">{t('roomManager.nuevaHabitacion')}</span>
         </Button>
       </div>
 
       <div className="flex-1 overflow-auto p-4 lg:p-6">
-        <div className="rounded-lg border border-zinc-800">
+        <div className="overflow-x-auto rounded-lg border border-zinc-800">
           <Table>
             <TableHeader>
               <TableRow className="border-zinc-800 hover:bg-transparent">
-                <TableHead className="text-zinc-400">Nombre</TableHead>
-                <TableHead className="text-zinc-400">Tipo</TableHead>
-                <TableHead className="text-zinc-400">Precio/noche</TableHead>
-                <TableHead className="text-zinc-400">Capacidad</TableHead>
-                <TableHead className="text-zinc-400 text-center">Privada</TableHead>
-                <TableHead className="text-zinc-400">Estado</TableHead>
-                <TableHead className="text-zinc-400">Limpieza</TableHead>
-                <TableHead className="text-zinc-400 text-right">Acciones</TableHead>
+                <TableHead className="text-zinc-400">{t('roomManager.nombre')}</TableHead>
+                <TableHead className="hidden md:table-cell text-zinc-400">{t('roomManager.tipo')}</TableHead>
+                <TableHead className="text-zinc-400">{t('roomManager.precioNoche')}</TableHead>
+                <TableHead className="text-zinc-400">{t('roomManager.capacidad')}</TableHead>
+                <TableHead className="hidden md:table-cell text-zinc-400 text-center">{t('roomManager.privada')}</TableHead>
+                <TableHead className="text-zinc-400">{t('roomManager.estado')}</TableHead>
+                <TableHead className="text-zinc-400">{t('roomManager.limpieza')}</TableHead>
+                <TableHead className="text-zinc-400 text-right">{t('roomManager.acciones')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rooms.map((room) => (
                 <TableRow key={room.id} className="border-zinc-800 hover:bg-zinc-800/50">
                   <TableCell className="font-medium text-white">{room.nombre}</TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <Badge variant="outline" className="border-zinc-700 text-zinc-300">
-                      {room.tipo}
+                      {tipoLabel(room.tipo)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-zinc-300">
                     ${room.precioPorNoche.toLocaleString('es-AR')}
                   </TableCell>
                   <TableCell className="text-zinc-300">{room.capacidad} pers.</TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="hidden md:table-cell text-center">
                     <span className={room.esPrivada ? 'text-emerald-400' : 'text-zinc-600'}>
-                      {room.esPrivada ? 'Sí' : 'No'}
+                      {room.esPrivada ? t('roomManager.si') : t('roomManager.no')}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -213,10 +229,10 @@ export function RoomManager({ rooms }: RoomManagerProps) {
                       }
                     >
                       {room.status === 'available'
-                        ? 'Disponible'
+                        ? t('roomManager.disponible')
                         : room.status === 'occupied'
-                          ? 'Ocupada'
-                          : 'Mantenimiento'}
+                          ? t('roomManager.ocupada')
+                          : t('roomManager.mantenimiento')}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -231,7 +247,7 @@ export function RoomManager({ rooms }: RoomManagerProps) {
                         variant="ghost"
                         size="icon"
                         onClick={() => openEdit(room)}
-                        className="h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-700"
+                        className="h-11 w-11 lg:h-8 lg:w-8 text-zinc-400 hover:text-white hover:bg-zinc-700"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -239,7 +255,7 @@ export function RoomManager({ rooms }: RoomManagerProps) {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDelete(room)}
-                        className="h-8 w-8 text-rose-400 hover:text-rose-300 hover:bg-rose-950/30"
+                        className="h-11 w-11 lg:h-8 lg:w-8 text-rose-400 hover:text-rose-300 hover:bg-rose-950/30"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -250,7 +266,7 @@ export function RoomManager({ rooms }: RoomManagerProps) {
               {rooms.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={8} className="py-12 text-center text-zinc-500">
-                    No hay habitaciones configuradas. Creá la primera.
+                    {t('roomManager.empty')}
                   </TableCell>
                 </TableRow>
               )}
@@ -263,7 +279,7 @@ export function RoomManager({ rooms }: RoomManagerProps) {
         <DialogContent className="max-w-md bg-zinc-900 border-zinc-800 text-white sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">
-              {editingRoom ? 'Editar Habitación' : 'Nueva Habitación'}
+              {editingRoom ? t('roomManager.editarHabitacion') : t('roomManager.nuevaHabitacionTitle')}
             </DialogTitle>
           </DialogHeader>
 
@@ -276,19 +292,19 @@ export function RoomManager({ rooms }: RoomManagerProps) {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="nombre" className="text-zinc-300">Nombre</Label>
+              <Label htmlFor="nombre" className="text-zinc-300">{t('roomManager.nombreLabel')}</Label>
               <Input
                 id="nombre"
                 value={form.nombre}
                 onChange={(e) => set('nombre', e.target.value)}
-                placeholder="101, Los Andes, etc."
+                placeholder={t('roomManager.nombrePlaceholder')}
                 className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tipo" className="text-zinc-300">Tipo</Label>
+              <Label htmlFor="tipo" className="text-zinc-300">{t('roomManager.tipoLabel')}</Label>
               <Select
                 value={form.tipo}
                 onValueChange={(v) => set('tipo', v as RoomType)}
@@ -297,9 +313,9 @@ export function RoomManager({ rooms }: RoomManagerProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="border-zinc-700 bg-zinc-800">
-                  {tipoOptions.map((t) => (
-                    <SelectItem key={t} value={t} className="text-white hover:bg-zinc-700">
-                      {t}
+                  {tipoOptions.map((tipo) => (
+                    <SelectItem key={tipo} value={tipo} className="text-white hover:bg-zinc-700">
+                      {tipoLabel(tipo)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -308,25 +324,25 @@ export function RoomManager({ rooms }: RoomManagerProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="precio" className="text-zinc-300">Precio por noche ($)</Label>
+                <Label htmlFor="precio" className="text-zinc-300">{t('roomManager.precioLabel')}</Label>
                 <Input
                   id="precio"
                   type="number"
                   min={0}
                   value={form.precioPorNoche}
-                  onChange={(e) => set('precioPorNoche', Number(e.target.value))}
+                  onChange={(e) => set('precioPorNoche', e.target.value)}
                   className="border-zinc-700 bg-zinc-800 text-white"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="capacidad" className="text-zinc-300">Capacidad (personas)</Label>
+                <Label htmlFor="capacidad" className="text-zinc-300">{t('roomManager.capacidadLabel')}</Label>
                 <Input
                   id="capacidad"
                   type="number"
                   min={1}
                   value={form.capacidad}
-                  onChange={(e) => set('capacidad', Number(e.target.value))}
+                  onChange={(e) => set('capacidad', e.target.value)}
                   className="border-zinc-700 bg-zinc-800 text-white"
                   required
                 />
@@ -337,7 +353,7 @@ export function RoomManager({ rooms }: RoomManagerProps) {
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label htmlFor="mascotas" className="text-zinc-300">Permite mascotas</Label>
+                <Label htmlFor="mascotas" className="text-zinc-300">{t('roomManager.mascotasLabel')}</Label>
                 <Switch
                   id="mascotas"
                   checked={form.permiteMascotas}
@@ -345,7 +361,7 @@ export function RoomManager({ rooms }: RoomManagerProps) {
                 />
               </div>
               <div className="flex items-center justify-between">
-                <Label htmlFor="privada" className="text-zinc-300">Habitación privada</Label>
+                <Label htmlFor="privada" className="text-zinc-300">{t('roomManager.privadaLabel')}</Label>
                 <Switch
                   id="privada"
                   checked={form.esPrivada}
@@ -361,7 +377,7 @@ export function RoomManager({ rooms }: RoomManagerProps) {
                 disabled={saving}
                 className="flex-1 border-zinc-700 bg-transparent text-zinc-300 hover:bg-zinc-800 hover:text-white"
               >
-                Cancelar
+                {t('roomManager.cancelar')}
               </Button>
               <Button
                 onClick={handleSave}
@@ -371,12 +387,12 @@ export function RoomManager({ rooms }: RoomManagerProps) {
                 {saving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Guardando...
+                    {t('roomManager.guardando')}
                   </>
                 ) : editingRoom ? (
-                  'Guardar Cambios'
+                  t('roomManager.guardarCambios')
                 ) : (
-                  'Crear Habitación'
+                  t('roomManager.crearHabitacion')
                 )}
               </Button>
             </div>
