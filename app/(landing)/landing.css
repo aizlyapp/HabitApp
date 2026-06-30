@@ -1411,6 +1411,7 @@
     line-height: 1.4;
     word-break: break-word;
     overflow-wrap: anywhere;
+    margin-bottom: 32px;
   }
 
   .hero-buttons {
@@ -1523,6 +1524,7 @@
     line-height: 1.4;
     word-break: break-word;
     overflow-wrap: anywhere;
+    margin-bottom: 28px;
   }
 
   .btn-large {
