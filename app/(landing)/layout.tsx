@@ -10,9 +10,9 @@ export const metadata: Metadata = {
     canonical: 'https://www.roomy.com.ar/',
   },
   openGraph: {
-    title: 'Roomy — Sistema de gestión para hostels en Argentina',
+    title: 'Roomy — PMS para hostels de Latinoamérica',
     description:
-      'Reservas, habitaciones y cobros con Mercado Pago en un solo lugar. Probá 14 días gratis.',
+      'Calendario de reservas, chatbot de WhatsApp 24/7 y cobros con Mercado Pago para hostels. Probá 14 días gratis.',
     url: 'https://www.roomy.com.ar/',
     siteName: 'Roomy',
     locale: 'es_AR',
@@ -27,9 +27,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Roomy — Sistema de gestión para hostels en Argentina',
+    title: 'Roomy — PMS para hostels de Latinoamérica',
     description:
-      'Reservas, habitaciones y cobros con Mercado Pago en un solo lugar. Probá gratis 14 días.',
+      'Calendario de reservas, chatbot de WhatsApp 24/7 y cobros con Mercado Pago. Probá gratis 14 días.',
     images: ['https://www.roomy.com.ar/og-image.png'],
   },
 };
@@ -48,13 +48,13 @@ export default function LandingLayout({ children }: { children: React.ReactNode 
             operatingSystem: 'Web',
             url: 'https://www.roomy.com.ar',
             description:
-              'Sistema de gestión de reservas y cobros para hostels y hoteles boutique en Argentina.',
+              'Sistema de gestión de reservas, chatbot de WhatsApp y cobros para hostels en Latinoamérica.',
             offers: {
               '@type': 'Offer',
               price: '0',
-              priceCurrency: 'ARS',
+              priceCurrency: 'USD',
               description:
-                '14 días gratis, luego Roomy Pro actualizado al tipo de cambio',
+                '14 días gratis. Luego Roomy Pro desde 50 USD fijos al mes.',
             },
             publisher: {
               '@type': 'Organization',
