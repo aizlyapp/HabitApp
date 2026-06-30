@@ -253,15 +253,14 @@
 }
 
 .l-hero-title .word {
-  display: inline-block;
-  word-spacing: 0.35em;
+  display: inline;
 }
 
 .l-hero-title .char {
   display: inline-block;
   opacity: 0;
   animation: charReveal 0.4s ease forwards;
-  white-space: pre-wrap;
+  white-space: pre;
 }
 
 @keyframes charReveal {
@@ -1514,8 +1513,9 @@
   }
 
   .l-hero-title {
-    letter-spacing: -1px;
-    font-size: 32px;
+    letter-spacing: -0.5px;
+    font-size: 26px;
+    line-height: 1.25;
   }
 
   .btn-large {
