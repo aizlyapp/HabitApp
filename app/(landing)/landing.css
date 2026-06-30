@@ -1317,7 +1317,7 @@
   }
 
   .l-hero {
-    padding: 100px 0 40px;
+    padding: 140px 0 40px;
     min-height: auto;
   }
 
@@ -1406,9 +1406,11 @@
     flex-direction: column;
     align-items: center;
     padding: 0 16px;
-    letter-spacing: -0.5px;
-    font-size: clamp(28px, 7vw, 36px);
-    line-height: 1.2;
+    letter-spacing: -0.3px;
+    font-size: clamp(20px, 5.5vw, 28px);
+    line-height: 1.35;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
 
   .hero-buttons {
@@ -1512,7 +1514,7 @@
 
 @media (max-width: 480px) {
   .l-hero {
-    padding: 80px 0 32px;
+    padding: 104px 0 32px;
   }
 
   .l-hero-title {
@@ -1534,11 +1536,12 @@
   }
 
   .problem-card {
-    padding: 20px 16px 24px 20px;
+    padding: 28px 22px 32px 30px;
   }
 
   .problem-title {
-    font-size: 15px;
+    font-size: 16px;
+    line-height: 1.35;
   }
 
   .problem-number {
