@@ -57,7 +57,7 @@ export default function Hero() {
           <span className="badge-dot" />
           <span>{t('landing.hero_badge')}</span>
         </div>
-        <h1 className="l-hero-title fade-in">
+        <h1 className="l-hero-title fade-in" style={{ marginTop: '40px' }}>
           <CharReveal text={t('landing.hero_title')} />
         </h1>
         <p className="hero-subtitle fade-in">

@@ -1317,8 +1317,9 @@
   }
 
   .l-hero {
-    padding: 140px 0 40px;
+    padding: 160px 0 40px;
     min-height: auto;
+    align-items: flex-start;
   }
 
   .hero-subtitle {
@@ -1367,7 +1368,10 @@
     font-size: 42px;
   }
 
-  .l-problems,
+  .l-problems {
+    padding: 80px 0 48px;
+  }
+
   .l-solution,
   .l-pricing,
   .l-steps,
@@ -1411,7 +1415,7 @@
     line-height: 1.4;
     word-break: break-word;
     overflow-wrap: anywhere;
-    margin-bottom: 32px;
+    margin-bottom: 40px;
   }
 
   .hero-buttons {
@@ -1515,7 +1519,7 @@
 
 @media (max-width: 480px) {
   .l-hero {
-    padding: 120px 0 32px;
+    padding: 140px 0 32px;
   }
 
   .l-hero-title {
