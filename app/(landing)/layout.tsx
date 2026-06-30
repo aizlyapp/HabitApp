@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Roomy — Software de gestión para hostels y hoteles boutique en Latinoamérica',
+  title: 'Roomy - Software de gestión para hostels y hoteles boutique en Latinoamérica',
   description:
     'Sistema de reservas, habitaciones y cobros con Mercado Pago para hostels y hoteles boutique en toda Latinoamérica. Probá gratis 14 días, sin tarjeta de crédito.',
   keywords:
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     canonical: 'https://www.roomy.com.ar/',
   },
   openGraph: {
-    title: 'Roomy — PMS para hostels de Latinoamérica',
+    title: 'Roomy - PMS para hostels de Latinoamérica',
     description:
       'Calendario de reservas, chatbot de WhatsApp 24/7 y cobros con Mercado Pago para hostels. Probá 14 días gratis.',
     url: 'https://www.roomy.com.ar/',
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Roomy — PMS para hostels de Latinoamérica',
+    title: 'Roomy - PMS para hostels de Latinoamérica',
     description:
       'Calendario de reservas, chatbot de WhatsApp 24/7 y cobros con Mercado Pago. Probá gratis 14 días.',
     images: ['https://www.roomy.com.ar/og-image.png'],
