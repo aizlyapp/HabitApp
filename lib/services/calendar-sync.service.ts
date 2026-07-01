@@ -157,7 +157,7 @@ export class CalendarSyncService {
             }
 
             const existingMap = new Map<string, any>(
-                (existingReservations || []).map((r: any) => [`${r.property_id}-${r.external_uid}-${r.source}`, r])
+                ((existingReservations as any[]) || []).map((r: any) => [`${r.property_id}-${r.external_uid}-${r.source}`, r])
             );
 
             const seenUids = new Set<string>();
