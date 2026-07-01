@@ -260,7 +260,7 @@ export function BookingModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-full sm:max-w-lg w-full max-h-dvh overflow-y-auto rounded-none sm:rounded-lg sm:top-[50%] sm:translate-y-[-50%] top-0 translate-y-0">
+      <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-full sm:max-w-lg w-full h-dvh sm:h-auto overflow-y-auto rounded-none sm:rounded-lg sm:top-[50%] sm:translate-y-[-50%] sm:left-[50%] sm:translate-x-[-50%] top-0 left-0 right-0 translate-x-0 translate-y-0">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">
             {t(editingBooking ? 'bookingModal.modificarReserva' : 'bookingModal.nuevaReserva')}
