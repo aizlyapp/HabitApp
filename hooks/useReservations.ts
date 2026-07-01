@@ -272,19 +272,20 @@ export function useReservations() {
         return { success: false, error: 'Reserva no encontrada' } as const;
       }
 
-      const prevReservations = queryClient.getQueryData<Reservation[]>(
-        queryKeys.reservations
-      );
-      const prevRooms = queryClient.getQueryData<Room[]>(queryKeys.rooms);
+      const reservationsKey = [...queryKeys.reservations, userId];
+      const roomsKey = [...queryKeys.rooms, userId];
 
-      queryClient.setQueryData<Reservation[]>(queryKeys.reservations, (old: Reservation[] | undefined) =>
+      const prevReservations = queryClient.getQueryData<Reservation[]>(reservationsKey);
+      const prevRooms = queryClient.getQueryData<Room[]>(roomsKey);
+
+      queryClient.setQueryData<Reservation[]>(reservationsKey, (old: Reservation[] | undefined) =>
         old
           ? old.map((r) =>
               r.id === reservationId ? { ...r, status: 'checked-in' as const } : r
             )
           : old
       );
-      queryClient.setQueryData<Room[]>(queryKeys.rooms, (old: Room[] | undefined) =>
+      queryClient.setQueryData<Room[]>(roomsKey, (old: Room[] | undefined) =>
         old
           ? old.map((r) =>
               r.id === reservation.room_id
@@ -301,8 +302,8 @@ export function useReservations() {
         } as Partial<Room>);
         return { success: true } as const;
       } catch (err) {
-        queryClient.setQueryData(queryKeys.reservations, prevReservations);
-        queryClient.setQueryData(queryKeys.rooms, prevRooms);
+        queryClient.setQueryData(reservationsKey, prevReservations);
+        queryClient.setQueryData(roomsKey, prevRooms);
         return {
           success: false,
           error: err instanceof Error ? err.message : 'Error al registrar check-in',
@@ -324,19 +325,20 @@ export function useReservations() {
         return { success: false, error: 'Reserva no encontrada' } as const;
       }
 
-      const prevReservations = queryClient.getQueryData<Reservation[]>(
-        queryKeys.reservations
-      );
-      const prevRooms = queryClient.getQueryData<Room[]>(queryKeys.rooms);
+      const reservationsKey = [...queryKeys.reservations, userId];
+      const roomsKey = [...queryKeys.rooms, userId];
 
-      queryClient.setQueryData<Reservation[]>(queryKeys.reservations, (old: Reservation[] | undefined) =>
+      const prevReservations = queryClient.getQueryData<Reservation[]>(reservationsKey);
+      const prevRooms = queryClient.getQueryData<Room[]>(roomsKey);
+
+      queryClient.setQueryData<Reservation[]>(reservationsKey, (old: Reservation[] | undefined) =>
         old
           ? old.map((r) =>
               r.id === reservationId ? { ...r, status: 'checked-out' as const } : r
             )
           : old
       );
-      queryClient.setQueryData<Room[]>(queryKeys.rooms, (old: Room[] | undefined) =>
+      queryClient.setQueryData<Room[]>(roomsKey, (old: Room[] | undefined) =>
         old
           ? old.map((r) =>
               r.id === reservation.room_id
@@ -354,8 +356,8 @@ export function useReservations() {
         await repo.updateCleaningStatus(userId, reservation.room_id, 'dirty');
         return { success: true } as const;
       } catch (err) {
-        queryClient.setQueryData(queryKeys.reservations, prevReservations);
-        queryClient.setQueryData(queryKeys.rooms, prevRooms);
+        queryClient.setQueryData(reservationsKey, prevReservations);
+        queryClient.setQueryData(roomsKey, prevRooms);
         return {
           success: false,
           error: err instanceof Error ? err.message : 'Error al registrar check-out',
@@ -372,9 +374,11 @@ export function useReservations() {
       const blocked = checkSubscriptionBlocked();
       if (blocked) return blocked;
 
-      const prev = queryClient.getQueryData<Reservation[]>(queryKeys.reservations);
+      const reservationsKey = [...queryKeys.reservations, userId];
 
-      queryClient.setQueryData<Reservation[]>(queryKeys.reservations, (old: Reservation[] | undefined) =>
+      const prev = queryClient.getQueryData<Reservation[]>(reservationsKey);
+
+      queryClient.setQueryData<Reservation[]>(reservationsKey, (old: Reservation[] | undefined) =>
         old
           ? old.map((r) =>
               r.id === reservationId ? { ...r, payment_status: paymentStatus } : r

@@ -79,9 +79,11 @@ export function ExecutiveDashboard({
       ? Math.round((occupiedRooms / rooms.length) * 100)
       : 0;
 
+    const monthStartStr = format(monthStart, 'yyyy-MM-dd');
+    const monthEndStr = format(monthEnd, 'yyyy-MM-dd');
+
     const monthReservations = reservations.filter((r) => {
-      const ci = new Date(r.check_in);
-      return r.status !== 'cancelled' && ci >= monthStart && ci <= monthEnd;
+      return r.status !== 'cancelled' && r.check_in >= monthStartStr && r.check_in <= monthEndStr;
     });
 
     const monthlyRevenue = monthReservations.reduce((sum, r) => sum + r.total_amount, 0);
