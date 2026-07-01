@@ -260,20 +260,23 @@ export function BookingModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-zinc-900 border-zinc-800 text-white sm:max-w-lg max-h-dvh overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-md bg-zinc-900 border-zinc-800 text-white sm:max-w-lg max-h-dvh flex flex-col !p-0">
+        <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
           <DialogTitle className="text-xl font-semibold">
             {t(editingBooking ? 'bookingModal.modificarReserva' : 'bookingModal.nuevaReserva')}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
+        {error && (
+          <div className="mx-6 mb-2 shrink-0">
             <div className="flex items-center gap-2 rounded-lg bg-rose-500/10 border border-rose-500/30 p-3 text-rose-400">
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
               <p className="text-sm">{error}</p>
             </div>
-          )}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 px-6 pb-6 space-y-4 min-h-0">
 
           <div className="space-y-2">
             <Label htmlFor="room" className="text-zinc-300">
