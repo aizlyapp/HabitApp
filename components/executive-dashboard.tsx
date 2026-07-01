@@ -64,8 +64,8 @@ export function ExecutiveDashboard({
 
   const {
     occupancyRate,
-    monthlyRevenue,
     collectedRevenue,
+    pendingRevenue,
     pendingCheckIns,
     dirtyRooms,
     todayCheckIns,
@@ -86,9 +86,11 @@ export function ExecutiveDashboard({
       return r.status !== 'cancelled' && r.check_in >= monthStartStr && r.check_in <= monthEndStr;
     });
 
-    const monthlyRevenue = monthReservations.reduce((sum, r) => sum + r.total_amount, 0);
     const collectedRevenue = monthReservations
       .filter((r) => r.payment_status === 'paid')
+      .reduce((sum, r) => sum + r.total_amount, 0);
+    const pendingRevenue = monthReservations
+      .filter((r) => r.payment_status === 'pending' || r.payment_status === 'deposit')
       .reduce((sum, r) => sum + r.total_amount, 0);
 
     const pendingCheckIns = reservations.filter(
@@ -115,8 +117,8 @@ export function ExecutiveDashboard({
 
     return {
       occupancyRate,
-      monthlyRevenue,
       collectedRevenue,
+      pendingRevenue,
       pendingCheckIns,
       dirtyRooms,
       todayCheckIns,
@@ -166,7 +168,7 @@ export function ExecutiveDashboard({
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-3xl font-bold text-white break-keep sm:whitespace-nowrap">
-              ${monthlyRevenue.toLocaleString('es-AR')}
+              ${(collectedRevenue + pendingRevenue).toLocaleString('es-AR')}
             </div>
             <div className="mt-1 flex items-center gap-2 text-xs">
               <span className="text-emerald-400 font-medium truncate">
@@ -174,7 +176,7 @@ export function ExecutiveDashboard({
               </span>
               <span className="text-zinc-600">|</span>
               <span className="text-zinc-500 truncate">
-                ${(monthlyRevenue - collectedRevenue).toLocaleString('es-AR')} {t('executiveDashboard.pendientes')}
+                ${pendingRevenue.toLocaleString('es-AR')} {t('executiveDashboard.pendientes')}
               </span>
             </div>
           </CardContent>
