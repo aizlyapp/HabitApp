@@ -35,6 +35,8 @@ const navItems = [
 ];
 
 const bottomNavItems = [
+  { id: 'subscription', key: 'sidebar.suscripcion', icon: CreditCard, href: '/suscripcion' },
+  { id: 'integrations', key: 'sidebar.integraciones', icon: Link, href: '/dashboard/settings/integrations' },
   { id: 'settings', key: 'sidebar.configuracion', icon: Settings },
 ];
 
@@ -146,31 +148,15 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
           </div>
 
           <div className="space-y-1">
-            <button
-              onClick={() => router.push('/suscripcion')}
-              className={cn(
-                'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                'text-zinc-400 hover:bg-zinc-800 hover:text-white hover:scale-[1.02] active:scale-[0.98]'
-              )}
-            >
-              <CreditCard className="h-5 w-5 flex-shrink-0" />
-              {!collapsed && <span>{t('sidebar.suscripcion')}</span>}
-            </button>
-            <button
-              onClick={() => router.push('/dashboard/settings/integrations')}
-              className={cn(
-                'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                'text-zinc-400 hover:bg-zinc-800 hover:text-white hover:scale-[1.02] active:scale-[0.98]'
-              )}
-            >
-              <Link className="h-5 w-5 flex-shrink-0" />
-              {!collapsed && <span>{t('sidebar.integraciones')}</span>}
-            </button>
             {bottomNavItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => {
-                  onViewChange(item.id);
+                  if (item.href) {
+                    router.push(item.href);
+                  } else {
+                    onViewChange(item.id);
+                  }
                   setMobileOpen(false);
                 }}
                 className={cn(
