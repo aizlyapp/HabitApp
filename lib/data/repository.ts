@@ -11,7 +11,7 @@ import type {
   CleaningStatus,
 } from '@/lib/data/types';
 import { toDateString } from '@/lib/data/validators';
-import type { ExternalReservation, RealAvailabilityResult } from '@/lib/data/ical-types';
+import type { ExternalReservation, RealAvailabilityResult, CombinedReservation, PropertySyncConfig } from '@/lib/data/ical-types';
 
 const DB_ROOM_COLUMNS = 'id, name, type, floor, capacity, status, cleaning_status, price_per_night, created_at';
 
@@ -68,6 +68,87 @@ export async function fetchAllReservations(userId: string): Promise<Reservation[
 
   if (error) throw error;
   return (data || []).map(mapReservation);
+}
+
+export async function fetchCombinedReservations(userId: string): Promise<CombinedReservation[]> {
+  // Fetch local reservations
+  const { data: localReservations, error: localError } = await supabase
+    .from('reservations')
+    .select('*')
+    .eq('user_id', userId)
+    .order('check_in');
+
+  if (localError) {
+    console.error('Error fetching local reservations:', localError);
+    throw localError;
+  }
+
+  // Fetch external reservations
+  const { data: externalReservations, error: externalError } = await supabase
+    .from('external_reservations')
+    .select('*')
+    .eq('user_id', userId)
+    .order('start_date');
+
+  if (externalError) {
+    console.error('Error fetching external reservations:', externalError);
+    throw externalError;
+  }
+
+  // Fetch sync configs to get ical_url per property
+  const { data: syncConfigs, error: configError } = await supabase
+    .from('property_sync_config')
+    .select('property_id, ical_url')
+    .eq('user_id', userId);
+
+  if (configError) {
+    console.error('Error fetching sync configs:', configError);
+  }
+
+  const configMap = new Map((syncConfigs || []).map((c: any) => [c.property_id, c.ical_url]));
+
+  // Map local reservations
+  const combined: CombinedReservation[] = (localReservations || []).map((r: any) => ({
+    id: r.id,
+    source: 'local' as const,
+    room_id: r.room_id,
+    guest_name: r.guest_name,
+    guest_email: r.guest_email,
+    guest_phone: r.guest_phone,
+    guest_count: r.guest_count,
+    check_in: r.check_in,
+    check_out: r.check_out,
+    total_amount: r.total_amount,
+    status: r.status,
+    payment_status: r.payment_status || 'pending',
+    notes: r.notes,
+    created_at: r.created_at,
+  }));
+
+  // Map external reservations
+  for (const r of externalReservations || []) {
+    combined.push({
+      id: r.id,
+      source: 'external' as const,
+      room_id: r.property_id,
+      property_id: r.property_id,
+      guest_name: r.guest_name || 'Huésped externo',
+      guest_email: r.guest_email || '',
+      guest_phone: r.guest_phone || '',
+      check_in: r.start_date,
+      check_out: r.end_date,
+      total_amount: r.total_amount || undefined,
+      status: r.status,
+      notes: r.guest_name || undefined,
+      external_source: r.source,
+      external_uid: r.external_uid,
+      ical_url: configMap.get(r.property_id) || undefined,
+      created_at: r.created_at,
+    });
+  }
+
+  // Sort by check_in date
+  return combined.sort((a, b) => a.check_in.localeCompare(b.check_in));
 }
 
 export async function checkRoomAvailability(

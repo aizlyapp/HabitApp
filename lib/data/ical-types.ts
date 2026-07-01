@@ -112,3 +112,25 @@ export interface CronJobStatus {
     totalPropertiesConfigured: number;
     avgSyncDurationMs: number;
 }
+
+// Combined reservation (local + external) for unified view
+export interface CombinedReservation {
+    id: string;
+    source: 'local' | 'external';
+    room_id: string;
+    property_id?: string;
+    guest_name: string;
+    guest_email: string;
+    guest_phone: string;
+    guest_count?: number;
+    check_in: string;
+    check_out: string;
+    total_amount?: number;
+    status: string;
+    payment_status?: string;
+    notes?: string | null;
+    external_source?: ExternalReservationSource;
+    external_uid?: string;
+    ical_url?: string;
+    created_at: string;
+}
