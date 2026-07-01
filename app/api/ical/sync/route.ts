@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { calendarSyncService } from '@/lib/services/calendar-sync.service';
+import { getCalendarSyncService } from '@/lib/services/calendar-sync.service';
 
 // POST /api/ical/sync - Sync a single integration or property
 // Body: { integrationId, propertyId, icalUrl, source }
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
             if (!icalUrl || !source) {
                 return NextResponse.json({ error: 'Faltan campos: integrationId, icalUrl, source' }, { status: 400 });
             }
-            const result = await calendarSyncService.syncIntegration(user.id, integrationId, icalUrl, source);
+            const result = await getCalendarSyncService().syncIntegration(user.id, integrationId, icalUrl, source);
             return NextResponse.json(result);
         }
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: `Fuente inválida. Usar: ${validSources.join(', ')}` }, { status: 400 });
         }
 
-        const result = await calendarSyncService.syncIntegrationLegacy(user.id, propertyId, icalUrl, source);
+        const result = await getCalendarSyncService().syncIntegrationLegacy(user.id, propertyId, icalUrl, source);
         return NextResponse.json(result);
     } catch (error) {
         console.error('Error in POST /api/ical/sync:', error);

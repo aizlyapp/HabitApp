@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { calendarSyncService } from '@/lib/services/calendar-sync.service';
+import { getCalendarSyncService } from '@/lib/services/calendar-sync.service';
 
 /**
  * Cron endpoint for automatic iCal synchronization
@@ -20,24 +20,24 @@ export async function POST(request: NextRequest) {
         console.log('🔄 Starting scheduled iCal sync...');
         const startedAt = new Date();
 
-        // Sync all auto-sync properties
-        const result = await calendarSyncService.syncAllProperties();
+        // Sync all auto-sync integrations (new global integration model)
+        const result = await getCalendarSyncService().syncAllIntegrations();
 
         const completedAt = new Date();
         const durationMs = completedAt.getTime() - startedAt.getTime();
 
         console.log(`✅ iCal sync completed in ${durationMs}ms:`, {
-            total: result.totalProperties,
-            successful: result.successfulSyncs,
-            failed: result.failedSyncs,
+            total: result.total,
+            successful: result.successful,
+            failed: result.failed,
         });
 
         // Store summary in response headers for monitoring
         const response = NextResponse.json(result);
         response.headers.set('X-Sync-Duration', durationMs.toString());
-        response.headers.set('X-Sync-Total', result.totalProperties.toString());
-        response.headers.set('X-Sync-Success', result.successfulSyncs.toString());
-        response.headers.set('X-Sync-Failed', result.failedSyncs.toString());
+        response.headers.set('X-Sync-Total', result.total.toString());
+        response.headers.set('X-Sync-Success', result.successful.toString());
+        response.headers.set('X-Sync-Failed', result.failed.toString());
 
         return response;
     } catch (error) {
@@ -46,9 +46,9 @@ export async function POST(request: NextRequest) {
             {
                 error: 'Critical cron error',
                 message: error instanceof Error ? error.message : 'Unknown error',
-                totalProperties: 0,
-                successfulSyncs: 0,
-                failedSyncs: 0,
+                total: 0,
+                successful: 0,
+                failed: 0,
                 results: [],
             },
             { status: 500 }

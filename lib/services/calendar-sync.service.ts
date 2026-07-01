@@ -331,4 +331,11 @@ export class CalendarSyncService {
     }
 }
 
-export const calendarSyncService = new CalendarSyncService();
+let calendarSyncServiceInstance: CalendarSyncService | null = null;
+
+export function getCalendarSyncService(): CalendarSyncService {
+    if (!calendarSyncServiceInstance) {
+        calendarSyncServiceInstance = new CalendarSyncService();
+    }
+    return calendarSyncServiceInstance;
+}
