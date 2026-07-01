@@ -44,7 +44,6 @@ import * as repo from '@/lib/data/repository';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from '@/lib/i18n/context';
 import { queryKeys } from '@/lib/data/queries';
-import { CalendarSyncConfig } from '@/components/calendar-sync-config';
 
 const tipoOptions: RoomType[] = ['Habitación', 'Departamento', 'Cabaña', 'Suite', 'Dormitorio'];
 
@@ -371,12 +370,6 @@ export function RoomManager({ rooms }: RoomManagerProps) {
               </div>
             </div>
 
-            {editingRoom && (
-              <>
-                <Separator className="bg-zinc-800" />
-                <CalendarSyncConfig propertyId={editingRoom.id} userId={userId!} />
-              </>
-            )}
 
             <div className="flex gap-3 pt-4">
               <Button
