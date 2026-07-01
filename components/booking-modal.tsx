@@ -1,14 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { format, addDays } from 'date-fns';
 import { useTranslation } from '@/lib/i18n/context';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { AlertCircle, Loader2, User, Users } from 'lucide-react';
+import { AlertCircle, Loader2, User, Users, X } from 'lucide-react';
 import type { Room, Reservation, Guest } from '@/lib/data/types';
 
 interface BookingModalProps {
@@ -258,281 +253,308 @@ export function BookingModal({
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-          className="bg-zinc-900 border-zinc-800 text-white max-w-full sm:max-w-lg w-full h-dvh sm:h-auto rounded-none sm:rounded-lg sm:top-[50%] sm:translate-y-[-50%] sm:left-[50%] sm:translate-x-[-50%] top-0 left-0 right-0 translate-x-0 translate-y-0 flex flex-col !p-0 !gap-0"
-          style={{ overflowY: 'scroll' }}
-        >
-        <DialogHeader className="px-6 pt-6 pb-3 shrink-0">
-          <DialogTitle className="text-xl font-semibold">
-            {t(editingBooking ? 'bookingModal.modificarReserva' : 'bookingModal.nuevaReserva')}
-          </DialogTitle>
-        </DialogHeader>
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
 
-        {error && (
-          <div className="mx-6 mb-3 shrink-0">
-            <div className="flex items-center gap-2 rounded-lg bg-rose-500/10 border border-rose-500/30 p-3 text-rose-400">
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
-              <p className="text-sm">{error}</p>
-            </div>
+  if (!open) return null;
+
+  const content = (
+    <>
+      <div className="flex flex-col space-y-1.5 text-center sm:text-left px-6 pt-6 pb-3 shrink-0">
+        <h2 className="text-xl font-semibold leading-none tracking-tight text-white">
+          {t(editingBooking ? 'bookingModal.modificarReserva' : 'bookingModal.nuevaReserva')}
+        </h2>
+      </div>
+
+      {error && (
+        <div className="mx-6 mb-3 shrink-0">
+          <div className="flex items-center gap-2 rounded-lg bg-rose-500/10 border border-rose-500/30 p-3 text-rose-400">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <p className="text-sm">{error}</p>
           </div>
-        )}
+        </div>
+      )}
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 pb-6 space-y-4 min-h-0">
+      <form onSubmit={handleSubmit} className="space-y-4 px-6 pb-6">
 
-          <div className="space-y-2">
-            <Label htmlFor="room" className="text-zinc-300">
-              {t('bookingModal.habitacion')}
-            </Label>
-            <Select
-              value={formData.room_id}
-              onValueChange={(value) =>
-                setFormData({ ...formData, room_id: value })
-              }
-            >
-              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                <SelectValue placeholder={t('bookingModal.seleccionarHabitacion')} />
-              </SelectTrigger>
-              <SelectContent className="bg-zinc-800 border-zinc-700">
-                {rooms.map((room) => (
-                  <SelectItem
-                    key={room.id}
-                    value={room.id}
-                    className="text-white hover:bg-zinc-700"
-                  >
-                    {room.nombre} - {room.tipo}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-            <div className="col-span-2">
-              <label className="text-xs text-zinc-500 block mb-1">{t('bookingModal.entrada')}</label>
-              <Input
-                type="date"
-                value={formData.check_in}
-                onChange={(e) => {
-                  const ci = e.target.value;
-                  const upd = recalcFromNights(ci, formData.nights);
-                  setFormData({ ...formData, check_in: ci, ...upd });
-                }}
-                className="bg-zinc-800 border-zinc-700 text-white h-11 text-sm"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-zinc-500 block mb-1">{t('bookingModal.noches')}</label>
-              <div className="flex items-center border border-zinc-700 rounded-md bg-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const n = Math.max(1, formData.nights - 1);
-                    const upd = recalcFromNights(formData.check_in, n);
-                    setFormData({ ...formData, ...upd });
-                  }}
-                  className="px-3 h-11 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
+        <div className="space-y-2">
+          <Label htmlFor="room" className="text-zinc-300">
+            {t('bookingModal.habitacion')}
+          </Label>
+          <Select
+            value={formData.room_id}
+            onValueChange={(value) =>
+              setFormData({ ...formData, room_id: value })
+            }
+          >
+            <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+              <SelectValue placeholder={t('bookingModal.seleccionarHabitacion')} />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-800 border-zinc-700">
+              {rooms.map((room) => (
+                <SelectItem
+                  key={room.id}
+                  value={room.id}
+                  className="text-white hover:bg-zinc-700"
                 >
-                  -
-                </button>
-                <span className="flex-1 text-center text-white text-sm tabular-nums">
-                  {formData.nights}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const n = formData.nights + 1;
-                    const upd = recalcFromNights(formData.check_in, n);
-                    setFormData({ ...formData, ...upd });
-                  }}
-                  className="px-3 h-11 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-            <div className="col-span-2">
-              <label className="text-xs text-zinc-500 block mb-1">{t('bookingModal.salida')}</label>
-              <Input
-                type="date"
-                value={formData.check_out}
-                onChange={(e) => {
-                  const co = e.target.value;
-                  const upd = recalcFromCheckOut(formData.check_in, co);
-                  setFormData({ ...formData, ...upd });
-                }}
-                className="bg-zinc-800 border-zinc-700 text-white h-11 text-sm"
-              />
-            </div>
-          </div>
+                  {room.nombre} - {room.tipo}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="pricePerPerson" className="text-zinc-300">
-                {t('bookingModal.precioPorPersona')}
-              </Label>
-              <Input
-                id="pricePerPerson"
-                type="number"
-                value={formData.price_per_person || ''}
-                onChange={(e) => {
-                  const val = Math.max(0, Number(e.target.value));
-                  setFormData({ ...formData, price_per_person: val });
-                  savePricePerPerson(val);
-                }}
-                className="bg-zinc-800 border-zinc-700 text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="guestCount" className="text-zinc-300">
-                {t('bookingModal.cantidadPersonas')}
-              </Label>
-              <Input
-                id="guestCount"
-                type="number"
-                min={1}
-                max={selectedRoomData?.capacidad || 20}
-                value={formData.guest_count || ''}
-                onChange={(e) => {
-                  const val = Math.max(0, parseInt(e.target.value) || 0);
-                  setFormData({ ...formData, guest_count: val });
-                }}
-                className="bg-zinc-800 border-zinc-700 text-white"
-              />
-            </div>
-          </div>
-
-          <div className="rounded-lg bg-zinc-800/50 border border-zinc-700 p-3">
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-400">
-                  ${formData.price_per_person.toLocaleString('es-AR')} × {formData.guest_count} pers × {formData.nights} {t('bookingModal.nochesPlural')}
-                </span>
-                <span className="text-xl font-semibold text-white">
-                  ${totalAmount.toLocaleString('es-AR')}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="guestName" className="text-zinc-300">
-              {t('bookingModal.huesped')}
-            </Label>
-            <div className="relative">
-              <Input
-                ref={nameRef}
-                id="guestName"
-                value={formData.guest_name}
-                onChange={(e) => handleNameChange(e.target.value)}
-                onFocus={() => {
-                  if (nameSuggestions.length > 0) setShowSuggestions(true);
-                }}
-                placeholder={t('bookingModal.nombreHuesped')}
-                className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
-              />
-              {showSuggestions && (
-                <div
-                  ref={suggestionsRef}
-                  className="absolute z-50 mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-800 shadow-xl max-h-48 overflow-y-auto"
-                >
-                  {nameSuggestions.map((guest) => (
-                    <button
-                      key={guest.id}
-                      type="button"
-                      onClick={() => selectSuggestion(guest)}
-                      className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-white hover:bg-zinc-700 border-b border-zinc-700/50 last:border-0"
-                    >
-                      <User className="h-4 w-4 flex-shrink-0 text-zinc-500" />
-                      <div className="flex flex-col">
-                        <span>{guest.nombre}</span>
-                        <span className="text-xs text-zinc-500">
-                          {[guest.email, guest.telefono].filter(Boolean).join(' • ')}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="guestEmail" className="text-zinc-300">
-                {t('bookingModal.email')}
-              </Label>
-              <Input
-                id="guestEmail"
-                type="text"
-                value={formData.guest_email}
-                onChange={(e) =>
-                  setFormData({ ...formData, guest_email: e.target.value })
-                }
-                placeholder={t('bookingModal.emailPlaceholder')}
-                className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="guestPhone" className="text-zinc-300">
-                {t('bookingModal.telefono')}
-              </Label>
-              <Input
-                id="guestPhone"
-                value={formData.guest_phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, guest_phone: e.target.value })
-                }
-                placeholder={t('bookingModal.telefonoPlaceholder')}
-                className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="notes" className="text-zinc-300">
-              {t('bookingModal.notas')}
-            </Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) =>
-                setFormData({ ...formData, notes: e.target.value })
-              }
-              placeholder={t('bookingModal.notasPlaceholder')}
-              className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 resize-none"
-              rows={3}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          <div className="col-span-2">
+            <label className="text-xs text-zinc-500 block mb-1">{t('bookingModal.entrada')}</label>
+            <Input
+              type="date"
+              value={formData.check_in}
+              onChange={(e) => {
+                const ci = e.target.value;
+                const upd = recalcFromNights(ci, formData.nights);
+                setFormData({ ...formData, check_in: ci, ...upd });
+              }}
+              className="bg-zinc-800 border-zinc-700 text-white h-11 text-sm"
             />
           </div>
-
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
-              className="flex-1 border-zinc-700 bg-transparent text-zinc-300 hover:bg-zinc-800 hover:text-white"
-            >
-              {t('bookingModal.cancelar')}
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-sky-600 text-white hover:bg-sky-700"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t(editingBooking ? 'bookingModal.guardando' : 'bookingModal.creando')}
-                </>
-              ) : (
-                t(editingBooking ? 'bookingModal.guardarCambios' : 'bookingModal.crearReserva')
-              )}
-            </Button>
+          <div>
+            <label className="text-xs text-zinc-500 block mb-1">{t('bookingModal.noches')}</label>
+            <div className="flex items-center border border-zinc-700 rounded-md bg-zinc-800">
+              <button
+                type="button"
+                onClick={() => {
+                  const n = Math.max(1, formData.nights - 1);
+                  const upd = recalcFromNights(formData.check_in, n);
+                  setFormData({ ...formData, ...upd });
+                }}
+                className="px-3 h-11 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
+              >
+                -
+              </button>
+              <span className="flex-1 text-center text-white text-sm tabular-nums">
+                {formData.nights}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const n = formData.nights + 1;
+                  const upd = recalcFromNights(formData.check_in, n);
+                  setFormData({ ...formData, ...upd });
+                }}
+                className="px-3 h-11 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
+              >
+                +
+              </button>
+            </div>
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+          <div className="col-span-2">
+            <label className="text-xs text-zinc-500 block mb-1">{t('bookingModal.salida')}</label>
+            <Input
+              type="date"
+              value={formData.check_out}
+              onChange={(e) => {
+                const co = e.target.value;
+                const upd = recalcFromCheckOut(formData.check_in, co);
+                setFormData({ ...formData, ...upd });
+              }}
+              className="bg-zinc-800 border-zinc-700 text-white h-11 text-sm"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="pricePerPerson" className="text-zinc-300">
+              {t('bookingModal.precioPorPersona')}
+            </Label>
+            <Input
+              id="pricePerPerson"
+              type="number"
+              value={formData.price_per_person || ''}
+              onChange={(e) => {
+                const val = Math.max(0, Number(e.target.value));
+                setFormData({ ...formData, price_per_person: val });
+                savePricePerPerson(val);
+              }}
+              className="bg-zinc-800 border-zinc-700 text-white"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="guestCount" className="text-zinc-300">
+              {t('bookingModal.cantidadPersonas')}
+            </Label>
+            <Input
+              id="guestCount"
+              type="number"
+              min={1}
+              max={selectedRoomData?.capacidad || 20}
+              value={formData.guest_count || ''}
+              onChange={(e) => {
+                const val = Math.max(0, parseInt(e.target.value) || 0);
+                setFormData({ ...formData, guest_count: val });
+              }}
+              className="bg-zinc-800 border-zinc-700 text-white"
+            />
+          </div>
+        </div>
+
+        <div className="rounded-lg bg-zinc-800/50 border border-zinc-700 p-3">
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-zinc-400">
+                ${formData.price_per_person.toLocaleString('es-AR')} × {formData.guest_count} pers × {formData.nights} {t('bookingModal.nochesPlural')}
+              </span>
+              <span className="text-xl font-semibold text-white">
+                ${totalAmount.toLocaleString('es-AR')}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="guestName" className="text-zinc-300">
+            {t('bookingModal.huesped')}
+          </Label>
+          <div className="relative">
+            <Input
+              ref={nameRef}
+              id="guestName"
+              value={formData.guest_name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              onFocus={() => {
+                if (nameSuggestions.length > 0) setShowSuggestions(true);
+              }}
+              placeholder={t('bookingModal.nombreHuesped')}
+              className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
+            />
+            {showSuggestions && (
+              <div
+                ref={suggestionsRef}
+                className="absolute z-50 mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-800 shadow-xl max-h-48 overflow-y-auto"
+              >
+                {nameSuggestions.map((guest) => (
+                  <button
+                    key={guest.id}
+                    type="button"
+                    onClick={() => selectSuggestion(guest)}
+                    className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-white hover:bg-zinc-700 border-b border-zinc-700/50 last:border-0"
+                  >
+                    <User className="h-4 w-4 flex-shrink-0 text-zinc-500" />
+                    <div className="flex flex-col">
+                      <span>{guest.nombre}</span>
+                      <span className="text-xs text-zinc-500">
+                        {[guest.email, guest.telefono].filter(Boolean).join(' • ')}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="guestEmail" className="text-zinc-300">
+              {t('bookingModal.email')}
+            </Label>
+            <Input
+              id="guestEmail"
+              type="text"
+              value={formData.guest_email}
+              onChange={(e) =>
+                setFormData({ ...formData, guest_email: e.target.value })
+              }
+              placeholder={t('bookingModal.emailPlaceholder')}
+              className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="guestPhone" className="text-zinc-300">
+              {t('bookingModal.telefono')}
+            </Label>
+            <Input
+              id="guestPhone"
+              value={formData.guest_phone}
+              onChange={(e) =>
+                setFormData({ ...formData, guest_phone: e.target.value })
+              }
+              placeholder={t('bookingModal.telefonoPlaceholder')}
+              className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="notes" className="text-zinc-300">
+            {t('bookingModal.notas')}
+          </Label>
+          <Textarea
+            id="notes"
+            value={formData.notes}
+            onChange={(e) =>
+              setFormData({ ...formData, notes: e.target.value })
+            }
+            placeholder={t('bookingModal.notasPlaceholder')}
+            className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 resize-none"
+            rows={3}
+          />
+        </div>
+
+        <div className="flex gap-3 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+            className="flex-1 border-zinc-700 bg-transparent text-zinc-300 hover:bg-zinc-800 hover:text-white"
+          >
+            {t('bookingModal.cancelar')}
+          </Button>
+          <Button
+            type="submit"
+            disabled={loading}
+            className="flex-1 bg-sky-600 text-white hover:bg-sky-700"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {t(editingBooking ? 'bookingModal.guardando' : 'bookingModal.creando')}
+              </>
+            ) : (
+              t(editingBooking ? 'bookingModal.guardarCambios' : 'bookingModal.crearReserva')
+            )}
+          </Button>
+        </div>
+      </form>
+    </>
+  );
+
+  return createPortal(
+    <div className="fixed inset-0 z-50" onClick={() => onOpenChange(false)}>
+      <div className="fixed inset-0 bg-black/50 sm:bg-black/80" />
+      <div className="fixed inset-0 flex flex-col sm:items-center sm:justify-center pointer-events-none">
+        <div
+          className="pointer-events-auto relative bg-zinc-900 border-zinc-800 text-white w-full max-w-full sm:max-w-lg h-dvh sm:h-auto overflow-y-auto rounded-none sm:rounded-lg border-0 sm:border flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => onOpenChange(false)}
+            className="absolute right-4 top-4 z-10 rounded-sm opacity-70 hover:opacity-100 text-zinc-400 hover:text-white transition-opacity"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          {content}
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }
