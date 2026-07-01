@@ -51,7 +51,6 @@ export function BookingCalendar({
   onBookingClick,
 }: BookingCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [mobileDay, setMobileDay] = useState(new Date());
   const [hoveredRoom, setHoveredRoom] = useState<string | null>(null);
   const { t, lang } = useTranslation();
 
@@ -69,9 +68,6 @@ export function BookingCalendar({
   const previousWeek = () => setCurrentDate(subWeeks(currentDate, 1));
   const nextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
   const goToToday = () => setCurrentDate(new Date());
-  const prevMobileDay = () => setMobileDay(addDays(mobileDay, -1));
-  const nextMobileDay = () => setMobileDay(addDays(mobileDay, 1));
-  const goToMobileToday = () => setMobileDay(new Date());
 
   const getBookingForRoomOnDay = (roomId: string, day: Date): Reservation | null => {
     const dayStr = format(day, 'yyyy-MM-dd');
@@ -333,86 +329,130 @@ export function BookingCalendar({
         </div>
       </div>
 
-      {/* Mobile day view */}
+      {/* Mobile week view */}
       <div className="md:hidden flex-1 overflow-y-auto">
-        <div className="flex items-center gap-2 border-b border-zinc-800 px-4 py-2.5">
-          <button onClick={prevMobileDay} className="p-1 text-zinc-400 hover:text-white">
-            <ChevronLeft className="h-4 w-4" />
+        {/* Week navigation */}
+        <div className="flex items-center gap-1 border-b border-zinc-800 px-2 py-2">
+          <button onClick={previousWeek} className="p-1.5 text-zinc-400 hover:text-white active:scale-90 transition-transform">
+            <ChevronLeft className="h-5 w-5" />
           </button>
           <div className="flex-1 text-center">
-            <span className="text-sm font-medium text-white">{format(mobileDay, "EEE d", { locale: es })}</span>
-            <span className="text-xs text-zinc-500 ml-1">{format(mobileDay, "MMM", { locale: es })}</span>
+            <span className="text-sm font-semibold text-white">
+              {t('calendar.semana')} {format(weekStart, 'w')}
+            </span>
+            <span className="text-[10px] text-zinc-500 ml-1">
+              {format(weekStart, 'd MMM', { locale: es })} - {format(addDays(weekStart, 6), 'd MMM', { locale: es })}
+            </span>
           </div>
-          <button onClick={nextMobileDay} className="p-1 text-zinc-400 hover:text-white">
-            <ChevronRight className="h-4 w-4" />
+          <button onClick={nextWeek} className="p-1.5 text-zinc-400 hover:text-white active:scale-90 transition-transform">
+            <ChevronRight className="h-5 w-5" />
           </button>
-          <button onClick={goToMobileToday} className="text-xs text-zinc-400 hover:text-white ml-1">
+          <button onClick={goToToday} className="text-[10px] text-zinc-400 hover:text-white px-2 py-1.5 ml-1">
             {t('calendar.hoy')}
           </button>
         </div>
 
-        <div className="divide-y divide-zinc-800/50">
-          {rooms.map((room) => {
-            const booking = getBookingForRoomOnDay(room.id, mobileDay);
-            const checkoutBooking = getCheckoutBookingForRoomOnDay(room.id, mobileDay);
-            return (
-              <div
-                key={room.id}
-                onClick={() => {
-                  if (booking) onBookingClick(booking);
-                  else if (room.status !== 'maintenance') onNewBooking(room, mobileDay);
-                }}
-                className={cn(
-                  'px-4 py-3 active:bg-zinc-800/50 transition-colors',
-                  booking ? 'border-l-2 border-sky-600' : ''
-                )}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-sm font-medium text-white truncate">{room.nombre}</span>
-                    <Badge className={cn('text-[10px] px-1.5 py-0 shrink-0', statusConfig[room.status]?.color || '')}>
-                      {statusConfig[room.status]?.label || room.status}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    {room.cleaning_status === 'dirty' && <AlertTriangle className="h-3 w-3 text-rose-400" />}
-                    {room.cleaning_status === 'in-progress' && <Clock className="h-3 w-3 text-amber-400" />}
-                    {room.cleaning_status === 'clean' && room.status !== 'maintenance' && <Sparkles className="h-3 w-3 text-emerald-400" />}
-                  </div>
-                </div>
-
-                {booking ? (
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0">
-                      <span className="text-xs font-medium text-white">{booking.guest_name}</span>
-                      <span className="text-[10px] text-zinc-500 ml-2">
-                        {format(new Date(booking.check_in), 'd MMM')} → {format(new Date(booking.check_out), 'd MMM')}
-                      </span>
+        {/* Week grid */}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[420px]">
+            <thead>
+              <tr>
+                <th className="sticky left-0 z-10 bg-zinc-950 border-r border-zinc-800 px-1.5 py-2 text-left text-[10px] font-medium text-zinc-500 uppercase tracking-wider w-[64px]">
+                  {t('calendar.habitacion')}
+                </th>
+                {weekDays.map((day) => {
+                  const freeRooms = rooms.filter(r => !getBookingForRoomOnDay(r.id, day) && r.status !== 'maintenance');
+                  const freeCount = freeRooms.length;
+                  const total = rooms.length;
+                  const pct = freeCount / total;
+                  return (
+                    <th key={day.toISOString()} className={cn('border-r border-zinc-800 px-0.5 py-1.5 text-center', isToday(day) && 'bg-sky-600/10')}>
+                      <div className="text-[9px] font-medium text-zinc-500 uppercase leading-tight">{format(day, 'EEE', { locale: es })}</div>
+                      <div className={cn('text-xs font-bold leading-tight', isToday(day) ? 'text-sky-400' : 'text-white')}>{format(day, 'd')}</div>
+                      <div className={cn(
+                        'mt-0.5 text-[9px] font-semibold leading-tight',
+                        pct >= 0.5 ? 'text-emerald-400' : pct >= 0.25 ? 'text-amber-400' : 'text-rose-400'
+                      )}>
+                        {freeCount}/{total}
+                      </div>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {rooms.map((room) => (
+                <tr key={room.id} className="border-b border-zinc-800/50">
+                  <td className="sticky left-0 z-10 bg-zinc-950 border-r border-zinc-800 px-1.5 py-2">
+                    <div className="flex items-center gap-1">
+                      <span className="text-[11px] font-medium text-white truncate max-w-[48px]">{room.nombre}</span>
+                      {room.cleaning_status === 'dirty' && <AlertTriangle className="h-2.5 w-2.5 text-rose-400 shrink-0" />}
+                      {room.cleaning_status === 'in-progress' && <Clock className="h-2.5 w-2.5 text-amber-400 shrink-0" />}
+                      {room.cleaning_status === 'clean' && room.status !== 'maintenance' && <Sparkles className="h-2.5 w-2.5 text-emerald-400 shrink-0" />}
                     </div>
-                    <Badge variant="outline" className={cn(
-                      'text-[10px] px-1.5 py-0 shrink-0',
-                      booking.status === 'confirmed' ? 'border-sky-600 text-sky-400' :
-                        booking.status === 'checked-in' ? 'border-emerald-600 text-emerald-400' :
-                          booking.status === 'checked-out' ? 'border-zinc-600 text-zinc-400' :
-                            'border-rose-600 text-rose-400'
-                    )}>
-                      {booking.status === 'confirmed' ? t('calendar.confirmada') :
-                        booking.status === 'checked-in' ? t('bookingDrawer.checkinRealizado') :
-                          booking.status === 'checked-out' ? t('bookingDrawer.checkoutRealizado') :
-                            t('bookingDrawer.cancelada')}
-                    </Badge>
-                  </div>
-                ) : room.status === 'maintenance' ? (
-                  <div className="flex items-center gap-1.5 text-xs text-rose-400">
-                    <Wrench className="h-3 w-3" />
-                    <span>{t('calendar.mantenimiento')}</span>
-                  </div>
-                ) : (
-                  <div className="text-xs text-zinc-500">{t('calendar.nuevaReserva')}</div>
-                )}
-              </div>
-            );
-          })}
+                  </td>
+                  {weekDays.map((day) => {
+                    const booking = getBookingForRoomOnDay(room.id, day);
+                    const checkoutBooking = getCheckoutBookingForRoomOnDay(room.id, day);
+                    const isCheckoutDay = checkoutBooking !== null;
+                    const showBookingStart = booking && hasBookingStarted(booking, day);
+
+                    let dotColor: string;
+                    let label: string;
+                    let isClickable = true;
+
+                    if (room.status === 'maintenance') {
+                      dotColor = 'bg-zinc-700';
+                      label = '⚙';
+                      isClickable = false;
+                    } else if (booking && showBookingStart) {
+                      dotColor = 'bg-amber-400';
+                      label = '→';
+                    } else if (booking) {
+                      dotColor = 'bg-rose-400';
+                      label = booking.guest_name.charAt(0).toUpperCase();
+                    } else if (isCheckoutDay) {
+                      dotColor = 'bg-amber-400';
+                      label = '←';
+                    } else {
+                      dotColor = 'bg-emerald-400';
+                      label = '';
+                    }
+
+                    return (
+                      <td
+                        key={day.toISOString()}
+                        onClick={() => {
+                          if (!isClickable) return;
+                          if (booking) onBookingClick(booking);
+                          else onNewBooking(room, day);
+                        }}
+                        className={cn(
+                          'border-r border-zinc-800/50 px-0.5 py-1.5 text-center cursor-pointer transition-colors',
+                          isClickable && !booking && 'hover:bg-zinc-800/30 active:bg-zinc-800',
+                          isToday(day) && 'bg-sky-600/5'
+                        )}
+                      >
+                        <div className="flex items-center justify-center">
+                          <div className={cn('h-6 w-6 rounded-full flex items-center justify-center', dotColor)}>
+                            <span className={cn(
+                              'text-[9px] font-bold leading-none',
+                              dotColor === 'bg-emerald-400' && 'text-emerald-950',
+                              dotColor === 'bg-rose-400' && 'text-white',
+                              dotColor === 'bg-amber-400' && 'text-amber-950',
+                              dotColor === 'bg-zinc-700' && 'text-zinc-400',
+                            )}>
+                              {label}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
