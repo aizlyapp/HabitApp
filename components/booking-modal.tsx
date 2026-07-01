@@ -260,21 +260,26 @@ export function BookingModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-full sm:max-w-lg w-full h-dvh sm:h-auto overflow-y-auto rounded-none sm:rounded-lg sm:top-[50%] sm:translate-y-[-50%] sm:left-[50%] sm:translate-x-[-50%] top-0 left-0 right-0 translate-x-0 translate-y-0">
-        <DialogHeader>
+      <DialogContent
+          className="bg-zinc-900 border-zinc-800 text-white max-w-full sm:max-w-lg w-full h-dvh sm:h-auto rounded-none sm:rounded-lg sm:top-[50%] sm:translate-y-[-50%] sm:left-[50%] sm:translate-x-[-50%] top-0 left-0 right-0 translate-x-0 translate-y-0 flex flex-col !p-0 !gap-0"
+          style={{ overflowY: 'scroll' }}
+        >
+        <DialogHeader className="px-6 pt-6 pb-3 shrink-0">
           <DialogTitle className="text-xl font-semibold">
             {t(editingBooking ? 'bookingModal.modificarReserva' : 'bookingModal.nuevaReserva')}
           </DialogTitle>
         </DialogHeader>
 
         {error && (
-          <div className="flex items-center gap-2 rounded-lg bg-rose-500/10 border border-rose-500/30 p-3 text-rose-400">
-            <AlertCircle className="h-4 w-4 flex-shrink-0" />
-            <p className="text-sm">{error}</p>
+          <div className="mx-6 mb-3 shrink-0">
+            <div className="flex items-center gap-2 rounded-lg bg-rose-500/10 border border-rose-500/30 p-3 text-rose-400">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <p className="text-sm">{error}</p>
+            </div>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 pb-6 space-y-4 min-h-0">
 
           <div className="space-y-2">
             <Label htmlFor="room" className="text-zinc-300">
