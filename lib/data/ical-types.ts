@@ -16,6 +16,7 @@ export interface ExternalReservation {
     status: ExternalReservationStatus;
     sync_token: string | null;
     raw_ical_data: any;
+    integration_id: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -38,9 +39,37 @@ export interface ExternalReservationInput {
     status?: ExternalReservationStatus;
     sync_token?: string | null;
     raw_ical_data?: any;
+    integration_id?: string | null;
 }
 
-// Property sync configuration
+// Global integration (replaces per-property sync config)
+export interface Integration {
+    id: string;
+    user_id: string;
+    ical_url: string;
+    source: ExternalReservationSource;
+    label: string;
+    auto_sync: boolean;
+    last_sync_at: string | null;
+    last_sync_status: 'success' | 'error' | 'pending' | null;
+    last_sync_error: string | null;
+    created_at: string;
+    updated_at: string;
+    // Joined fields
+    rooms?: IntegrationRoom[];
+}
+
+// Junction table: integration → rooms
+export interface IntegrationRoom {
+    id: string;
+    integration_id: string;
+    room_id: string;
+    created_at: string;
+    // Joined fields
+    room_name?: string;
+}
+
+// Property sync configuration (legacy, kept for backward compatibility)
 export interface PropertySyncConfig {
     id: string;
     property_id: string;
