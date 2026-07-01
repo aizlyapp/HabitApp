@@ -67,9 +67,6 @@ export default function Hero() {
           <a href="https://app.roomy.com.ar" className="btn btn-primary btn-large">
             {t('landing.hero_cta_1')}
           </a>
-          <a href="#features" className="btn btn-secondary btn-large">
-            {t('landing.hero_cta_2')}
-          </a>
         </div>
 
         <div className="mockup-wrapper fade-in" ref={mockupRef}>
