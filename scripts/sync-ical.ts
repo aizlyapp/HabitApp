@@ -9,6 +9,20 @@
  *   npx tsx scripts/sync-ical.ts --test  (test with hardcoded values)
  */
 
+// Load environment variables FIRST, before any other imports
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Try to load .env.local (Next.js convention)
+const envLocalPath = path.resolve(process.cwd(), '.env.local');
+dotenv.config({ path: envLocalPath });
+
+// Fallback to .env if .env.local doesn't exist
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    const envPath = path.resolve(process.cwd(), '.env');
+    dotenv.config({ path: envPath });
+}
+
 import { calendarSyncService } from '../lib/services/calendar-sync.service';
 
 interface CliArgs {
@@ -104,10 +118,16 @@ async function main() {
 
     try {
         // Check required environment variables
-        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-            console.error('❌ Missing environment variables:');
-            console.error('  - NEXT_PUBLIC_SUPABASE_URL');
-            console.error('  - SUPABASE_SERVICE_ROLE_KEY');
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+            console.error('❌ Missing environment variable: NEXT_PUBLIC_SUPABASE_URL');
+            console.error('   Make sure .env.local exists and contains this variable.');
+            console.error('   Current working directory:', process.cwd());
+            process.exit(1);
+        }
+
+        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+            console.error('❌ Missing environment variable: SUPABASE_SERVICE_ROLE_KEY');
+            console.error('   Make sure .env.local exists and contains this variable.');
             process.exit(1);
         }
 

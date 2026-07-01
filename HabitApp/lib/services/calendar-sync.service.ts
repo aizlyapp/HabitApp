@@ -52,7 +52,7 @@ export class CalendarSyncService {
             const parsed = ical.parseICS(icalContent);
 
             for (const [key, value] of Object.entries(parsed)) {
-                if (value && value.type === 'VEVENT') {
+                if (value.type === 'VEVENT') {
                     const event = value as any;
 
                     const startDate = this.extractDate(event.start);
@@ -156,8 +156,8 @@ export class CalendarSyncService {
                 throw new Error(`Failed to fetch existing reservations: ${fetchError.message}`);
             }
 
-            const existingMap = new Map<string, any>(
-                (existingReservations || []).map((r: any) => [`${r.property_id}-${r.external_uid}-${r.source}`, r])
+            const existingMap = new Map(
+                (existingReservations || []).map((r) => [`${r.property_id}-${r.external_uid}-${r.source}`, r])
             );
 
             const seenUids = new Set<string>();
@@ -196,7 +196,7 @@ export class CalendarSyncService {
                     if (needsUpdate) {
                         const { error: updateError } = await this.supabase
                             .from('external_reservations')
-                            .update(eventData as any)
+                            .update(eventData)
                             .eq('id', existing.id);
 
                         if (updateError) {
@@ -209,7 +209,7 @@ export class CalendarSyncService {
                     // Insert new
                     const { error: insertError } = await this.supabase
                         .from('external_reservations')
-                        .insert(eventData as any);
+                        .insert(eventData);
 
                     if (insertError) {
                         console.error(`Failed to insert reservation ${event.uid}:`, insertError);
