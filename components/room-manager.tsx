@@ -247,7 +247,7 @@ export function RoomManager({ rooms }: RoomManagerProps) {
                         variant="ghost"
                         size="icon"
                         onClick={() => openEdit(room)}
-                        className="h-11 w-11 lg:h-8 lg:w-8 text-zinc-400 hover:text-white hover:bg-zinc-700"
+                        className="h-12 w-12 lg:h-9 lg:w-9 text-zinc-400 hover:text-white hover:bg-zinc-700"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -255,7 +255,7 @@ export function RoomManager({ rooms }: RoomManagerProps) {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDelete(room)}
-                        className="h-11 w-11 lg:h-8 lg:w-8 text-rose-400 hover:text-rose-300 hover:bg-rose-950/30"
+                        className="h-12 w-12 lg:h-9 lg:w-9 text-rose-400 hover:text-rose-300 hover:bg-rose-950/30"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

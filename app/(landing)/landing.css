@@ -143,6 +143,7 @@ body {
   cursor: pointer;
   border: 1px solid transparent;
   font-family: inherit;
+  touch-action: manipulation;
 }
 
 .btn-primary {
@@ -1366,6 +1367,14 @@ body {
     overflow-x: hidden;
   }
 
+  .btn {
+    min-height: 48px;
+  }
+
+  .btn-large {
+    min-height: 52px;
+  }
+
   .features-seo-text {
     margin: 0 auto 48px;
     padding: 0 16px;
@@ -1488,7 +1497,8 @@ body {
 
   .lang-btn {
     font-size: 12px;
-    padding: 4px 8px;
+    padding: 6px 12px;
+    min-height: 48px;
   }
 
   .l-hero-title {
@@ -1599,6 +1609,7 @@ body {
   .contact-buttons .btn-whatsapp {
     width: 100%;
     justify-content: center;
+    min-height: 52px;
   }
 
   .footer-link {

@@ -9,7 +9,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ sidebar, children }: DashboardLayoutProps) {
   return (
-    <div className="flex h-screen bg-zinc-950">
+    <div className="flex h-dvh bg-zinc-950">
       {sidebar}
       <main className="flex-1 overflow-y-auto lg:ml-0 pl-14 md:pl-0">
         {children}

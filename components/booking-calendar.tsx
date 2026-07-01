@@ -159,8 +159,8 @@ export function BookingCalendar({
 
       {/* Calendar grid — Desktop */}
       <div className="hidden md:block flex-1 overflow-auto">
-        <div className="min-w-[640px] md:min-w-[800px]">
-          <div className="sticky top-0 z-20 grid grid-cols-[140px_repeat(7,1fr)] md:grid-cols-[180px_repeat(7,1fr)] border-b border-zinc-800 bg-zinc-900">
+        <div className="min-w-[640px] lg:min-w-0">
+          <div className="sticky top-0 z-20 grid grid-cols-[140px_repeat(7,1fr)] lg:grid-cols-[180px_repeat(7,1fr)] border-b border-zinc-800 bg-zinc-900">
             <div className="border-r border-zinc-800 p-3 text-sm font-medium text-zinc-400">
               {t('calendar.habitacion')}
             </div>
@@ -190,7 +190,7 @@ export function BookingCalendar({
             <div
               key={room.id}
               className={cn(
-                'grid grid-cols-[180px_repeat(7,1fr)] border-b border-zinc-800 transition-colors',
+                'grid grid-cols-[140px_repeat(7,1fr)] lg:grid-cols-[180px_repeat(7,1fr)] border-b border-zinc-800 transition-colors',
                 hoveredRoom === room.id && 'bg-zinc-800/50'
               )}
               onMouseEnter={() => setHoveredRoom(room.id)}
@@ -334,7 +334,7 @@ export function BookingCalendar({
       </div>
 
       {/* Mobile day view */}
-      <div className="lg:hidden flex-1 overflow-y-auto">
+      <div className="md:hidden flex-1 overflow-y-auto">
         <div className="flex items-center gap-2 border-b border-zinc-800 px-4 py-2.5">
           <button onClick={prevMobileDay} className="p-1 text-zinc-400 hover:text-white">
             <ChevronLeft className="h-4 w-4" />

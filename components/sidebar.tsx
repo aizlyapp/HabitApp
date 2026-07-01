@@ -132,7 +132,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
                   setMobileOpen(false);
                 }}
                 className={cn(
-                  'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                  'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium min-h-[48px] transition-colors',
                   activeView === item.id
                     ? 'bg-sky-600/20 text-sky-400'
                     : 'text-zinc-400 hover:bg-zinc-800 hover:text-white hover:scale-[1.02] active:scale-[0.98]'
@@ -163,7 +163,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
                   setMobileOpen(false);
                 }}
                 className={cn(
-                  'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                  'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium min-h-[48px] transition-colors',
                   activeView === item.id
                     ? 'bg-sky-600/20 text-sky-400'
                     : 'text-zinc-400 hover:bg-zinc-800 hover:text-white hover:scale-[1.02] active:scale-[0.98]'
@@ -202,7 +202,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
         variant="ghost"
         size="icon"
         onClick={() => setMobileOpen(true)}
-        className="fixed left-4 top-4 z-30 lg:hidden bg-zinc-900 text-white shadow-lg"
+        className="fixed left-4 top-4 z-30 lg:hidden h-12 w-12 bg-zinc-900 text-white shadow-lg"
       >
         <ChevronRight className="h-5 w-5" />
       </Button>

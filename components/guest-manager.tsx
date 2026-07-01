@@ -272,7 +272,7 @@ export function GuestManager({ guests }: GuestManagerProps) {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md bg-zinc-900 border-zinc-800 text-white">
+        <DialogContent className="max-w-md sm:max-w-lg bg-zinc-900 border-zinc-800 text-white">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">
               {t('guestManager.nuevoHuespedTitle')}
