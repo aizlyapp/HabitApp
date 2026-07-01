@@ -86,6 +86,7 @@ export const translations = {
     salida: { es: 'Salida', pt: 'Saída' },
     precioPorPersona: { es: 'Precio por persona', pt: 'Preço por pessoa' },
     cantidadPersonas: { es: 'Cantidad de personas', pt: 'Quantidade de pessoas' },
+    cantidadObligatorio: { es: 'Indicá la cantidad de personas', pt: 'Indique a quantidade de pessoas' },
     huesped: { es: 'Huésped', pt: 'Hóspede' },
     nombreHuesped: { es: 'Nombre del huésped', pt: 'Nome do hóspede' },
     email: { es: 'Email', pt: 'Email' },

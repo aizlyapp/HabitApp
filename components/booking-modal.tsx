@@ -77,7 +77,7 @@ export function BookingModal({
     guest_email: '',
     guest_phone: '',
     price_per_person: getSavedPricePerPerson(),
-    guest_count: 1,
+    guest_count: 0,
     check_in: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '',
     check_out: defaultCheckOut,
     nights: 1,
@@ -132,7 +132,7 @@ export function BookingModal({
           guest_email: '',
           guest_phone: '+54 ',
           price_per_person: selectedRoom?.precioPorNoche || saved,
-          guest_count: 1,
+          guest_count: 0,
           check_in: ci,
           check_out: ci ? format(addDays(new Date(ci), 1), 'yyyy-MM-dd') : '',
           nights: 1,
@@ -210,6 +210,10 @@ export function BookingModal({
       setError(t('bookingModal.nombreObligatorio'));
       return;
     }
+    if (!formData.guest_count || formData.guest_count < 1) {
+      setError(t('bookingModal.cantidadObligatorio'));
+      return;
+    }
     if (!formData.check_in || !formData.check_out) {
       setError(t('bookingModal.fechasObligatorias'));
       return;
@@ -243,7 +247,7 @@ export function BookingModal({
         guest_email: '',
         guest_phone: '',
         price_per_person: getSavedPricePerPerson(),
-        guest_count: 1,
+        guest_count: 0,
         check_in: '',
         check_out: '',
         nights: 1,
@@ -256,7 +260,7 @@ export function BookingModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-zinc-900 border-zinc-800 text-white sm:max-w-lg">
+      <DialogContent className="max-w-md bg-zinc-900 border-zinc-800 text-white sm:max-w-lg max-h-dvh overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">
             {t(editingBooking ? 'bookingModal.modificarReserva' : 'bookingModal.nuevaReserva')}
@@ -383,9 +387,9 @@ export function BookingModal({
                 type="number"
                 min={1}
                 max={selectedRoomData?.capacidad || 20}
-                value={formData.guest_count}
+                value={formData.guest_count || ''}
                 onChange={(e) => {
-                  const val = Math.max(1, parseInt(e.target.value) || 1);
+                  const val = Math.max(0, parseInt(e.target.value) || 0);
                   setFormData({ ...formData, guest_count: val });
                 }}
                 className="bg-zinc-800 border-zinc-700 text-white"
