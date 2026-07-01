@@ -150,14 +150,15 @@ export class CalendarSyncService {
                 .from('external_reservations')
                 .select('*')
                 .eq('property_id', propertyId)
-                .eq('user_id', userId);
+                .eq('user_id', userId) as { data: ExternalReservation[] | null; error: any };
 
             if (fetchError) {
                 throw new Error(`Failed to fetch existing reservations: ${fetchError.message}`);
             }
 
-            const existingMap = new Map<string, any>(
-                ((existingReservations as any[]) || []).map((r: any) => [`${r.property_id}-${r.external_uid}-${r.source}`, r])
+            const reservations = existingReservations || [];
+            const existingMap = new Map<string, ExternalReservation>(
+                reservations.map((r) => [`${r.property_id}-${r.external_uid}-${r.source}`, r])
             );
 
             const seenUids = new Set<string>();
@@ -194,7 +195,7 @@ export class CalendarSyncService {
                         existing.sync_token !== eventData.sync_token;
 
                     if (needsUpdate) {
-                        const { error: updateError } = await this.supabase
+                        const { error: updateError } = await (this.supabase as any)
                             .from('external_reservations')
                             .update(eventData as any)
                             .eq('id', existing.id);
@@ -288,7 +289,7 @@ export class CalendarSyncService {
         const { data: configs, error: fetchError } = await this.supabase
             .from('property_sync_config')
             .select('*')
-            .eq('auto_sync', true);
+            .eq('auto_sync', true) as { data: PropertySyncConfig[] | null; error: any };
 
         if (fetchError) {
             console.error('Failed to fetch sync configs:', fetchError);
