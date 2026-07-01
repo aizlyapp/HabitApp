@@ -221,23 +221,24 @@ export class CalendarSyncService {
             }
 
             // Delete events that no longer exist in iCal
-            for (const [key, existing] of existingMap) {
+            existingMap.forEach((existing, key) => {
                 if (!seenUids.has(key)) {
-                    const { error: deleteError } = await this.supabase
+                    void this.supabase
                         .from('external_reservations')
                         .delete()
-                        .eq('id', existing.id);
-
-                    if (deleteError) {
-                        console.error(`Failed to delete removed reservation ${existing.id}:`, deleteError);
-                    } else {
-                        eventsRemoved++;
-                    }
+                        .eq('id', existing.id)
+                        .then(({ error: deleteError }) => {
+                            if (deleteError) {
+                                console.error(`Failed to delete removed reservation ${existing.id}:`, deleteError);
+                            } else {
+                                eventsRemoved++;
+                            }
+                        });
                 }
-            }
+            });
 
             // Update sync config timestamp
-            await this.supabase
+            await (this.supabase as any)
                 .from('property_sync_config')
                 .update({
                     last_sync_at: startedAt,
@@ -252,7 +253,7 @@ export class CalendarSyncService {
 
             // Update sync config with error
             try {
-                await this.supabase
+                await (this.supabase as any)
                     .from('property_sync_config')
                     .update({
                         last_sync_at: startedAt,
