@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://www.roomy.com.ar/</loc>
+    <loc>https://roomy.com.ar/</loc>
     <lastmod>2026-06-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
   <!-- Descomentá cada artículo cuando lo publiques
   <url>
-    <loc>https://www.roomy.com.ar/blog/como-organizar-reservas-hostel-sin-excel</loc>
+    <loc>https://roomy.com.ar/blog/como-organizar-reservas-hostel-sin-excel</loc>
     <lastmod>2026-06-29</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.roomy.com.ar/blog/errores-que-hacen-perder-reservas-hostels-argentina</loc>
+    <loc>https://roomy.com.ar/blog/errores-que-hacen-perder-reservas-hostels-argentina</loc>
     <lastmod>2026-06-29</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.roomy.com.ar/blog/como-cobrar-con-mercado-pago-en-tu-hostel</loc>
+    <loc>https://roomy.com.ar/blog/como-cobrar-con-mercado-pago-en-tu-hostel</loc>
     <lastmod>2026-06-29</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.8</priority>
