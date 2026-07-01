@@ -11,6 +11,7 @@ import type {
   CleaningStatus,
 } from '@/lib/data/types';
 import { toDateString } from '@/lib/data/validators';
+import type { ExternalReservation, RealAvailabilityResult } from '@/lib/data/ical-types';
 
 const DB_ROOM_COLUMNS = 'id, name, type, floor, capacity, status, cleaning_status, price_per_night, created_at';
 
@@ -100,6 +101,80 @@ export async function checkRoomAvailability(
   return {
     available: !conflicting,
     conflict: conflicting ? mapReservation(conflicting) : undefined,
+  };
+}
+
+export async function checkRealAvailability(
+  userId: string,
+  roomId: string,
+  checkIn: Date,
+  checkOut: Date,
+  excludeReservationId?: string
+): Promise<RealAvailabilityResult> {
+  const checkInStr = toDateString(checkIn);
+  const checkOutStr = toDateString(checkOut);
+
+  // Query local reservations
+  const { data: localReservations, error: localError } = await supabase
+    .from('reservations')
+    .select('id, check_in, check_out, guest_name, status')
+    .eq('user_id', userId)
+    .eq('room_id', roomId)
+    .neq('status', 'cancelled')
+    .lt('check_in', checkOutStr)
+    .gt('check_out', checkInStr);
+
+  if (localError) {
+    console.error('Error checking local availability:', localError);
+  }
+
+  // Query external reservations
+  const { data: externalReservations, error: externalError } = await supabase
+    .from('external_reservations')
+    .select('id, start_date, end_date, guest_name, status, source')
+    .eq('user_id', userId)
+    .eq('property_id', roomId)
+    .neq('status', 'cancelled')
+    .lt('start_date', checkOutStr)
+    .gt('end_date', checkInStr);
+
+  if (externalError) {
+    console.error('Error checking external availability:', externalError);
+  }
+
+  const conflicting: RealAvailabilityResult['conflictingReservations'] = [];
+
+  if (localReservations) {
+    for (const r of localReservations) {
+      if (r.id !== excludeReservationId) {
+        conflicting.push({
+          id: r.id,
+          source: 'local',
+          start_date: r.check_in,
+          end_date: r.check_out,
+          guest_name: r.guest_name,
+          status: r.status,
+        });
+      }
+    }
+  }
+
+  if (externalReservations) {
+    for (const r of externalReservations) {
+      conflicting.push({
+        id: r.id,
+        source: 'external',
+        start_date: r.start_date,
+        end_date: r.end_date,
+        guest_name: r.guest_name,
+        status: r.status,
+      });
+    }
+  }
+
+  return {
+    available: conflicting.length === 0,
+    conflictingReservations: conflicting.sort((a, b) => a.start_date.localeCompare(b.start_date)),
   };
 }
 
