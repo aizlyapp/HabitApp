@@ -4,6 +4,7 @@ export const translations = {
     reservas: { es: 'Reservas', pt: 'Reservas' },
     habitaciones: { es: 'Habitaciones', pt: 'Quartos' },
     huespedes: { es: 'Huéspedes', pt: 'Hóspedes' },
+    integraciones: { es: 'Integraciones', pt: 'Integrações' },
     configuracion: { es: 'Configuración', pt: 'Configurações' },
     suscripcion: { es: 'Suscripción', pt: 'Assinatura' },
     cerrarSesion: { es: 'Cerrar sesión', pt: 'Sair' },

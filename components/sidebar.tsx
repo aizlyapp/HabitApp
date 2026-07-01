@@ -16,6 +16,7 @@ import {
   LogOut,
   CreditCard,
   Languages,
+  Link,
 } from 'lucide-react';
 import { loadConfigFromDB } from '@/lib/data/business-config-db';
 import { useTranslation } from '@/lib/i18n/context';
@@ -154,6 +155,16 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
             >
               <CreditCard className="h-5 w-5 flex-shrink-0" />
               {!collapsed && <span>{t('sidebar.suscripcion')}</span>}
+            </button>
+            <button
+              onClick={() => router.push('/dashboard/settings/integrations')}
+              className={cn(
+                'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                'text-zinc-400 hover:bg-zinc-800 hover:text-white hover:scale-[1.02] active:scale-[0.98]'
+              )}
+            >
+              <Link className="h-5 w-5 flex-shrink-0" />
+              {!collapsed && <span>{t('sidebar.integraciones')}</span>}
             </button>
             {bottomNavItems.map((item) => (
               <button
