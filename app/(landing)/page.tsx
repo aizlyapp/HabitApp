@@ -12,6 +12,7 @@ import Steps from './sections/steps';
 import FAQ from './sections/faq';
 import FinalCTA from './sections/final-cta';
 import Contact from './sections/contact';
+import About from './sections/about';
 import FooterSection from './sections/footer-section';
 import ChatWidget from './components/chat-widget';
 
@@ -39,6 +40,7 @@ export default function LandingPage() {
       <FAQ />
       <FinalCTA />
       <Contact />
+      <About />
       <FooterSection />
       <ChatWidget />
     </div>
