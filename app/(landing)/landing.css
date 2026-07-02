@@ -1851,19 +1851,15 @@ body {
     min-height: 0;
   }
 
-  .l-nav .flex.items-center.gap-2 button:first-child {
-    width: 32px;
-    height: 32px;
-  }
-
-  .nav-lang-btn {
-    padding: 4px 8px !important;
+  .l-nav .nav-lang-btn {
+    padding: 4px 7px !important;
     min-height: 0 !important;
   }
 
-  .nav-lang-btn svg {
-    width: 16px;
-    height: 16px;
+  .l-nav .nav-lang-btn svg,
+  .l-nav .nav-lang-btn img {
+    width: 15px;
+    height: 11px;
   }
 
   .lang-btn {
