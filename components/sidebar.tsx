@@ -18,9 +18,12 @@ import {
   Languages,
   Link,
   Shield,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { loadConfigFromDB } from '@/lib/data/business-config-db';
 import { useTranslation } from '@/lib/i18n/context';
+import { useThemeToggle } from '@/components/theme-provider';
 import type { BusinessConfig } from '@/lib/data/business-config';
 
 const ADMIN_EMAIL = 'makuke15@gmail.com';
@@ -47,6 +50,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   const router = useRouter();
   const supabase = createClient();
   const { t, lang, toggleLang } = useTranslation();
+  const { theme, toggleTheme } = useThemeToggle();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [businessConfig, setBusinessConfig] = useState<Partial<BusinessConfig>>({});
@@ -175,6 +179,22 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
                 {!collapsed && <span>{t(item.key)}</span>}
               </button>
             ))}
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              className={cn(
+                'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                'text-zinc-400 hover:bg-zinc-800 hover:text-white hover:scale-[1.02] active:scale-[0.98]'
+              )}
+              aria-label={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+            >
+              {theme === 'dark' ? (
+                <Sun className="h-5 w-5 flex-shrink-0" />
+              ) : (
+                <Moon className="h-5 w-5 flex-shrink-0" />
+              )}
+              {!collapsed && <span>{theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}</span>}
+            </button>
             {/* Language toggle */}
             {!collapsed && (
               <button

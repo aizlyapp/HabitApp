@@ -35,8 +35,6 @@ export const metadata: Metadata = {
   },
 };
 
-import { ThemeProvider } from '@/components/theme-provider';
-
 export default function LandingLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
@@ -82,7 +80,7 @@ export default function LandingLayout({ children }: { children: React.ReactNode 
           }),
         }}
       />
-      <ThemeProvider>{children}</ThemeProvider>
+      {children}
     </>
   );
 }
