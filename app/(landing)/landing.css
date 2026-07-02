@@ -1313,7 +1313,113 @@ body {
   height: 22px;
 }
 
-/* About Section */
+/* About inline (inside contact section) */
+.contact-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.about-inline {
+  width: 100%;
+  max-width: 800px;
+  text-align: center;
+}
+
+.about-inline-title {
+  font-size: clamp(24px, 3.5vw, 36px);
+  font-weight: 700;
+  margin-bottom: 24px;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #fff 60%, var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.about-inline-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 32px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+
+.about-inline-avatar {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--accent);
+  box-shadow: 0 8px 30px rgba(56, 189, 248, 0.2);
+  flex-shrink: 0;
+}
+
+.about-inline-text {
+  max-width: 600px;
+  text-align: left;
+}
+
+.about-inline-text p {
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1.8;
+  margin-bottom: 16px;
+}
+
+.about-inline-text p:last-child {
+  margin-bottom: 0;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Responsive for about inline */
+@media (max-width: 768px) {
+  .contact-buttons {
+    gap: 20px;
+    padding: 0 16px;
+  }
+
+  .about-inline-content {
+    padding: 24px;
+    gap: 20px;
+  }
+
+  .about-inline-avatar {
+    width: 120px;
+    height: 120px;
+  }
+
+  .about-inline-text {
+    text-align: center;
+  }
+
+  .about-inline-text p {
+    font-size: 15px;
+    line-height: 1.7;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-inline-content {
+    padding: 20px;
+  }
+
+  .about-inline-avatar {
+    width: 100px;
+    height: 100px;
+  }
+
+  .about-inline-text p {
+    font-size: 14px;
+  }
+}
+
+/* About Section (old - keep for reference or remove) */
 .l-about {
   padding: 60px 0;
   background: var(--bg-primary);
