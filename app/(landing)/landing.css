@@ -1845,6 +1845,27 @@ body {
     display: none;
   }
 
+  .l-nav .btn-primary {
+    padding: 7px 12px;
+    font-size: 12px;
+    min-height: 0;
+  }
+
+  .l-nav .flex.items-center.gap-2 button:first-child {
+    width: 32px;
+    height: 32px;
+  }
+
+  .nav-lang-btn {
+    padding: 4px 8px !important;
+    min-height: 0 !important;
+  }
+
+  .nav-lang-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
   .lang-btn {
     font-size: 12px;
     padding: 6px 12px;
