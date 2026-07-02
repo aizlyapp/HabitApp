@@ -17,10 +17,13 @@ import {
   CreditCard,
   Languages,
   Link,
+  Shield,
 } from 'lucide-react';
 import { loadConfigFromDB } from '@/lib/data/business-config-db';
 import { useTranslation } from '@/lib/i18n/context';
 import type { BusinessConfig } from '@/lib/data/business-config';
+
+const ADMIN_EMAIL = 'makuke15@gmail.com';
 
 interface SidebarProps {
   activeView: string;
@@ -47,11 +50,13 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [businessConfig, setBusinessConfig] = useState<Partial<BusinessConfig>>({});
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user?.id) {
         loadConfigFromDB(user.id, supabase).then(setBusinessConfig);
+        setIsAdmin(user.email === ADMIN_EMAIL);
       }
     });
   }, []);
@@ -178,6 +183,18 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
               >
                 <Languages className="h-5 w-5 flex-shrink-0" />
                 <span>{lang === 'es' ? 'PT' : 'ES'}</span>
+              </button>
+            )}
+            {isAdmin && !collapsed && (
+              <button
+                onClick={() => {
+                  router.push('/admin');
+                  setMobileOpen(false);
+                }}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-white hover:scale-[1.02] active:scale-[0.98] transition-colors"
+              >
+                <Shield className="h-5 w-5 flex-shrink-0" />
+                <span>Panel Admin</span>
               </button>
             )}
             <button
