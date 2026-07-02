@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /_next/
-Sitemap: https://www.roomy.com.ar/sitemap.xml
+Sitemap: https://roomy.com.ar/sitemap.xml
