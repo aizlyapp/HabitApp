@@ -90,6 +90,15 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api/og|api/webhook|api/diagnose-whatsapp|api/landing-chat|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - auth/* (all auth routes: login, signup, callback, reset password, etc)
+     * - api/og, api/webhook, api/diagnose-whatsapp, api/landing-chat (public APIs)
+     * - files with extensions (svg, png, jpg, jpeg, gif, webp)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|auth/|api/og|api/webhook|api/diagnose-whatsapp|api/landing-chat|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
