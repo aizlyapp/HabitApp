@@ -442,6 +442,25 @@ export const translations = {
     chat_typing: { es: 'Escribiendo...', pt: 'Digitando...' },
     chat_error: { es: 'Hubo un error de conexión. Si querés escribinos por WhatsApp.', pt: 'Houve um erro de conexão. Se preferir, fale conosco pelo WhatsApp.' },
   },
+  admin: {
+    title: { es: 'Panel de Administración', pt: 'Painel de Administração' },
+    subtitle: { es: 'Monitoreo de usuarios registrados y actividad', pt: 'Monitoramento de usuários registrados e atividade' },
+    stats: {
+      totalUsers: { es: 'Total de Usuarios', pt: 'Total de Usuários' },
+      newLast7Days: { es: 'Nuevos (7 días)', pt: 'Novos (7 dias)' },
+      activeLast7Days: { es: 'Activos (7 días)', pt: 'Ativos (7 dias)' },
+    },
+    table: {
+      email: { es: 'Email', pt: 'Email' },
+      registered: { es: 'Registrado', pt: 'Registrado' },
+      lastLogin: { es: 'Último Login', pt: 'Último Login' },
+      confirmed: { es: 'Confirmado', pt: 'Confirmado' },
+      never: { es: 'Nunca', pt: 'Nunca' },
+      yes: { es: 'Sí', pt: 'Sim' },
+      no: { es: 'No', pt: 'Não' },
+    },
+    error: { es: 'Error al cargar los datos de administración', pt: 'Erro ao carregar dados de administração' },
+  },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

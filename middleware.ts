@@ -62,8 +62,16 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isAuthPage = pathname.startsWith('/auth');
+  const isAdminRoute = pathname.startsWith('/admin');
   const isProtectedRoute =
     pathname.startsWith('/dashboard') || pathname.startsWith('/suscripcion');
+
+  // Admin route: redirect unauthenticated users to "/" (not "/auth") to not reveal the route exists
+  if (!user && isAdminRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/';
+    return NextResponse.redirect(url);
+  }
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
