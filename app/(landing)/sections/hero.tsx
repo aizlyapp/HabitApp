@@ -17,19 +17,28 @@ export default function Hero() {
   const kpiOccupancyRef = useRef<HTMLSpanElement>(null);
   const kpiRevenueRef = useRef<HTMLSpanElement>(null);
   const kpiPendingRef = useRef<HTMLSpanElement>(null);
+  const socialBookingRef = useRef<HTMLSpanElement>(null);
+  const socialHotelsRef = useRef<HTMLSpanElement>(null);
+  const socialSatisfactionRef = useRef<HTMLSpanElement>(null);
   const mockupRef = useRef<HTMLDivElement>(null);
 
   const animateOccupancy = useAnimatedCounter(kpiOccupancyRef, 73);
   const animateRevenue = useAnimatedCounter(kpiRevenueRef, 2850000);
   const animatePending = useAnimatedCounter(kpiPendingRef, 4);
+  const animateSocialBookings = useAnimatedCounter(socialBookingRef, 100);
+  const animateSocialHotels = useAnimatedCounter(socialHotelsRef, 50);
+  const animateSocialSatisfaction = useAnimatedCounter(socialSatisfactionRef, 98);
 
   const handleMockupVisible = useCallback(() => {
     setTimeout(() => {
       animateOccupancy();
       animateRevenue();
       animatePending();
+      animateSocialBookings();
+      animateSocialHotels();
+      animateSocialSatisfaction();
     }, 300);
-  }, [animateOccupancy, animateRevenue, animatePending]);
+  }, [animateOccupancy, animateRevenue, animatePending, animateSocialBookings, animateSocialHotels, animateSocialSatisfaction]);
 
   useEffect(() => {
     const el = mockupRef.current;
@@ -67,6 +76,23 @@ export default function Hero() {
           <a href="https://app.roomy.com.ar" className="btn btn-primary btn-large">
             {t('landing.hero_cta_1')}
           </a>
+        </div>
+
+        <div className="social-proof fade-in">
+          <div className="social-proof-item">
+            <span className="social-proof-num"><span ref={socialBookingRef}>0</span>+</span>
+            <span className="social-proof-label">reservas gestionadas</span>
+          </div>
+          <div className="social-proof-dot" />
+          <div className="social-proof-item">
+            <span className="social-proof-num"><span ref={socialHotelsRef}>0</span>+</span>
+            <span className="social-proof-label">hoteles activos</span>
+          </div>
+          <div className="social-proof-dot" />
+          <div className="social-proof-item">
+            <span className="social-proof-num"><span ref={socialSatisfactionRef}>0</span>%</span>
+            <span className="social-proof-label">satisfacción</span>
+          </div>
         </div>
 
         <div className="mockup-wrapper fade-in" ref={mockupRef}>

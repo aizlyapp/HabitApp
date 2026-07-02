@@ -5,6 +5,7 @@ import './landing.css';
 import { useCustomCursor, useParticles, useScrollReveal } from './components/landing-hooks';
 import Nav from './components/nav';
 import Hero from './sections/hero';
+import TrustBadges from './sections/trust-badges';
 import Problems from './sections/problems';
 import Features from './sections/features';
 import Pricing from './sections/pricing';
@@ -32,6 +33,7 @@ export default function LandingPage() {
       <div className="custom-cursor" ref={cursorRef} />
       <Nav />
       <Hero />
+      <TrustBadges />
       <Problems />
       <Features />
       <Pricing />

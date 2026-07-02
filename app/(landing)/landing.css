@@ -23,12 +23,34 @@ body {
   --warning: #f97316;
   --error: #ef4444;
   --star: #eab308;
+  --nav-bg: rgba(10, 10, 10, 0.85);
+  --mockup-shadow: 0 0 60px rgba(56, 189, 248, 0.15);
+  --badge-bg: rgba(56, 189, 248, 0.08);
+  --badge-border: rgba(56, 189, 248, 0.2);
   min-height: 100vh;
   background: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
   overflow-x: hidden;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+[data-theme="light"] .landing-page {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #e2e8f0;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-hover: rgba(0, 0, 0, 0.12);
+  --star: #eab308;
+  --nav-bg: rgba(248, 250, 252, 0.9);
+  --mockup-shadow: 0 0 60px rgba(56, 189, 248, 0.1);
+  --badge-bg: rgba(56, 189, 248, 0.1);
+  --badge-border: rgba(56, 189, 248, 0.3);
 }
 
 /* Custom cursor */
@@ -67,15 +89,43 @@ body {
   left: 0;
   right: 0;
   z-index: 1000;
-  background: rgba(10, 10, 10, 0.85);
+  background: var(--nav-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
   transition: background 0.3s ease;
 }
 
+[data-theme="light"] .l-nav {
+  --nav-bg: rgba(248, 250, 252, 0.9);
+  border-bottom-color: var(--border);
+}
+
+[data-theme="light"] .l-nav .nav-cta button,
+[data-theme="light"] .l-nav .nav-lang-btn {
+  border-color: #e4e4e7;
+  background: rgba(255, 255, 255, 0.8);
+  color: #27272a;
+}
+
+[data-theme="light"] .l-nav .nav-lang-btn-active {
+  border-color: var(--accent);
+  background: rgba(56, 189, 248, 0.15);
+  color: #0f172a;
+}
+
+[data-theme="light"] .l-nav .nav-cta button:hover,
+[data-theme="light"] .l-nav .nav-lang-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: #d4d4d8;
+}
+
 .nav-scrolled .l-nav {
   background: rgba(10, 10, 10, 0.95);
+}
+
+[data-theme="light"] .nav-scrolled .l-nav {
+  background: rgba(248, 250, 252, 0.95);
 }
 
 .nav-container {
@@ -231,8 +281,8 @@ body {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: rgba(56, 189, 248, 0.08);
-  border: 1px solid rgba(56, 189, 248, 0.15);
+  background: var(--badge-bg);
+  border: 1px solid var(--badge-border);
   border-radius: 100px;
   font-size: 13px;
   font-weight: 500;
@@ -308,6 +358,45 @@ body {
   flex-wrap: wrap;
 }
 
+/* Social Proof */
+.social-proof {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 36px;
+  flex-wrap: wrap;
+}
+
+.social-proof-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.social-proof-num {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.social-proof-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.social-proof-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  opacity: 0.4;
+}
+
 /* Mockup */
 .mockup-wrapper {
   margin-top: 60px;
@@ -315,11 +404,11 @@ body {
 }
 
 .mockup {
-  background: #0d0d0d;
+  background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  box-shadow: var(--mockup-shadow), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
   transform: rotateX(2deg) rotateY(-1deg);
   transition: all 0.3s ease;
 }
@@ -572,6 +661,56 @@ body {
     transform: translateY(-100vh) rotate(720deg);
     opacity: 0;
   }
+}
+
+/* Trust Badges */
+.trust-badges {
+  padding: 40px 0 20px;
+  position: relative;
+}
+
+.trust-badges-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.trust-badges-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.trust-badges-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.trust-badge-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.trust-badge-item:hover {
+  opacity: 1;
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
 }
 
 /* Problem Section */
@@ -1258,7 +1397,7 @@ body {
 /* Contact Section */
 .l-contact {
   padding: 80px 0;
-  background: #111111;
+  background: var(--bg-card);
   text-align: center;
 }
 
