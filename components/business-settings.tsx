@@ -25,6 +25,8 @@ import {
   MessageCircle,
   RefreshCw,
   Loader2,
+  Send,
+  Phone,
 } from 'lucide-react';
 import type { BusinessConfig } from '@/lib/data/business-config';
 import { loadConfig, saveConfig, qrContent } from '@/lib/data/business-config';
@@ -43,6 +45,9 @@ export function BusinessSettings() {
   const [config, setConfig] = useState<BusinessConfig>(loadConfig);
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [testPhone, setTestPhone] = useState('');
+  const [testSending, setTestSending] = useState(false);
+  const [testResult, setTestResult] = useState<'ok' | 'error' | null>(null);
   const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -164,6 +169,37 @@ export function BusinessSettings() {
     };
     img.src = url;
   }, [config.nombre, config.logo]);
+
+  const handleTestWhatsApp = async () => {
+    if (!testPhone.trim()) return;
+    setTestSending(true);
+    setTestResult(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const res = await fetch('/api/whatsapp/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          to: testPhone.trim(),
+          text: '🛠️ Mensaje de prueba desde Roomy.\n\nSi recibís esto, la configuración de WhatsApp funciona correctamente.',
+        }),
+      });
+
+      const data = await res.json();
+      setTestResult(data.success ? 'ok' : 'error');
+    } catch {
+      setTestResult('error');
+    } finally {
+      setTestSending(false);
+      setTimeout(() => setTestResult(null), 4000);
+    }
+  };
 
   const qrValue = qrContent(config);
 
@@ -404,6 +440,82 @@ export function BusinessSettings() {
                 <p className="text-[11px] text-sky-400 break-all">https://app.roomy.com.ar/api/webhook/whatsapp</p>
                 <p className="text-[11px] text-zinc-500">{t('settings.metaStep4')}</p>
                 <p className="text-[11px] text-zinc-500">{t('settings.metaStep5')}</p>
+              </div>
+
+              <Separator className="bg-zinc-800" />
+
+              <div>
+                <p className="text-sm font-medium text-zinc-300 mb-3">{t('settings.notificaciones')}</p>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-zinc-400">{t('settings.notifyOnCreate')}</span>
+                    <Switch
+                      checked={config.notifyOnCreate ?? true}
+                      onCheckedChange={(val) => update('notifyOnCreate', val)}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-zinc-400">{t('settings.notifyOnCheckin')}</span>
+                    <Switch
+                      checked={config.notifyOnCheckin ?? true}
+                      onCheckedChange={(val) => update('notifyOnCheckin', val)}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-zinc-400">{t('settings.notifyOnCancel')}</span>
+                    <Switch
+                      checked={config.notifyOnCancel ?? true}
+                      onCheckedChange={(val) => update('notifyOnCancel', val)}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-zinc-400">{t('settings.notifyCheckinReminder')}</span>
+                    <Switch
+                      checked={config.notifyCheckinReminder ?? true}
+                      onCheckedChange={(val) => update('notifyCheckinReminder', val)}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-zinc-400">{t('settings.notifyReviewRequest')}</span>
+                    <Switch
+                      checked={config.notifyReviewRequest ?? true}
+                      onCheckedChange={(val) => update('notifyReviewRequest', val)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator className="bg-zinc-800" />
+
+              <div className="space-y-2">
+                <Label className="text-zinc-300">{t('settings.numeroPrueba')}</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={testPhone}
+                    onChange={(e) => setTestPhone(e.target.value)}
+                    placeholder="+5491123456789"
+                    className="border-zinc-700 bg-zinc-800 text-white"
+                  />
+                  <Button
+                    onClick={handleTestWhatsApp}
+                    disabled={testSending || !testPhone.trim()}
+                    className="shrink-0 gap-2 bg-green-600 text-white hover:bg-green-700"
+                    size="sm"
+                  >
+                    {testSending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    {t('settings.enviarPrueba')}
+                  </Button>
+                </div>
+                {testResult === 'ok' && (
+                  <p className="text-xs text-emerald-400">{t('settings.pruebaEnviada')}</p>
+                )}
+                {testResult === 'error' && (
+                  <p className="text-xs text-rose-400">{t('settings.pruebaError')}</p>
+                )}
               </div>
             </CardContent>
           </Card>

@@ -11,6 +11,11 @@ export interface BusinessConfig {
   whatsappVerifyToken: string;
   botEnabled: boolean;
   botPersonality: string;
+  notifyOnCreate: boolean;
+  notifyOnCheckin: boolean;
+  notifyOnCancel: boolean;
+  notifyCheckinReminder: boolean;
+  notifyReviewRequest: boolean;
 }
 
 const STORAGE_KEY = 'roomy_business_config';
@@ -28,6 +33,11 @@ export const defaultConfig: BusinessConfig = {
   whatsappVerifyToken: '',
   botEnabled: false,
   botPersonality: 'Sos un asistente amable y profesional del hostel. Respondés en español, de forma clara y concisa.',
+  notifyOnCreate: true,
+  notifyOnCheckin: true,
+  notifyOnCancel: true,
+  notifyCheckinReminder: true,
+  notifyReviewRequest: true,
 };
 
 export function loadConfig(): BusinessConfig {

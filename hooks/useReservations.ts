@@ -116,6 +116,21 @@ export function useReservations() {
         const data = await createReservationMutation.mutateAsync(
           reservation as ReservationInsert
         );
+
+        if (reservation.guest_phone && userId) {
+          const room = rooms.find((r) => r.id === reservation.room_id);
+          const { sendReservationConfirmation } = await import('@/lib/services/whatsapp');
+          sendReservationConfirmation(
+            userId,
+            reservation.guest_phone,
+            reservation.guest_name || 'Huésped',
+            room?.nombre || reservation.room_id,
+            reservation.check_in,
+            reservation.check_out,
+            reservation.total_amount || 0
+          ).catch((e) => console.error('Error sending WhatsApp confirmation:', e));
+        }
+
         return { success: true, data } as const;
       } catch (err) {
         return {
@@ -193,9 +208,26 @@ export function useReservations() {
 
   const cancelReservation = useCallback(
     async (id: string) => {
-      return updateReservation(id, { status: 'cancelled' });
+      const result = await updateReservation(id, { status: 'cancelled' });
+
+      if (result.success && userId) {
+        const reservation = reservations.find((r) => r.id === id);
+        if (reservation?.guest_phone) {
+          const room = rooms.find((r) => r.id === reservation.room_id);
+          const { sendReservationCancelled } = await import('@/lib/services/whatsapp');
+          sendReservationCancelled(
+            userId,
+            reservation.guest_phone,
+            reservation.guest_name || 'Huésped',
+            room?.nombre || reservation.room_id || '',
+            reservation.check_in || ''
+          ).catch((e) => console.error('Error sending cancellation WhatsApp:', e));
+        }
+      }
+
+      return result;
     },
-    [updateReservation]
+    [updateReservation, userId, reservations, rooms]
   );
 
   const updateRoomStatus = useCallback(
@@ -300,6 +332,18 @@ export function useReservations() {
         await repo.updateRoom(userId, reservation.room_id, {
           status: 'occupied',
         } as Partial<Room>);
+
+        if (reservation.guest_phone && userId) {
+          const room = rooms.find((r) => r.id === reservation.room_id);
+          const { sendCheckInNotification } = await import('@/lib/services/whatsapp');
+          sendCheckInNotification(
+            userId,
+            reservation.guest_phone,
+            reservation.guest_name || 'Huésped',
+            room?.nombre || reservation.room_id
+          ).catch((e) => console.error('Error sending check-in WhatsApp:', e));
+        }
+
         return { success: true } as const;
       } catch (err) {
         queryClient.setQueryData(reservationsKey, prevReservations);
@@ -310,7 +354,7 @@ export function useReservations() {
         } as const;
       }
     },
-    [userId, reservations, queryClient, checkSubscriptionBlocked]
+    [userId, reservations, rooms, queryClient, checkSubscriptionBlocked]
   );
 
   const checkOut = useCallback(

@@ -26,6 +26,11 @@ export async function loadConfigFromDB(
     aliasCbuCvu: data.alias_cbu_cvu || '',
     linkPago: data.link_pago || '',
     direccion: data.direccion || '',
+    notifyOnCreate: data.notify_on_create ?? true,
+    notifyOnCheckin: data.notify_on_checkin ?? true,
+    notifyOnCancel: data.notify_on_cancel ?? true,
+    notifyCheckinReminder: data.notify_checkin_reminder ?? true,
+    notifyReviewRequest: data.notify_review_request ?? true,
   };
 }
 
@@ -48,6 +53,11 @@ export async function saveConfigToDB(
   if ('titular' in config) dbData.titular = config.titular;
   if ('banco' in config) dbData.banco = config.banco;
   if ('logo' in config) dbData.logo = config.logo;
+  if ('notifyOnCreate' in config) dbData.notify_on_create = config.notifyOnCreate;
+  if ('notifyOnCheckin' in config) dbData.notify_on_checkin = config.notifyOnCheckin;
+  if ('notifyOnCancel' in config) dbData.notify_on_cancel = config.notifyOnCancel;
+  if ('notifyCheckinReminder' in config) dbData.notify_checkin_reminder = config.notifyCheckinReminder;
+  if ('notifyReviewRequest' in config) dbData.notify_review_request = config.notifyReviewRequest;
 
   const { data: existing } = await supabase
     .from('business_config')

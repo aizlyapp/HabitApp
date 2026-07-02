@@ -80,57 +80,57 @@ function buildRoomsContext(rooms: any[], reservations: any[]) {
     .join('\n');
 }
 
-async function sendWhatsAppMessage(
-  token: string,
-  phoneNumberId: string,
-  to: string,
-  text: string
+import { sendWhatsAppMessage } from '@/lib/services/whatsapp';
+
+function calculateTotalAmount(
+  roomId: string,
+  checkIn: string,
+  checkOut: string,
+  guestCount: number,
+  rooms: any[]
 ) {
-  const id = phoneNumberId?.toString().trim() || '';
-  let recipient = to?.toString().trim().replace(/[^0-9]/g, '') || '';
-  if (recipient.startsWith('549')) {
-    recipient = '54' + recipient.slice(3);
-  }
+  const room = rooms.find((r) => r.id === roomId);
+  if (!room || !room.price_per_night) return 0;
 
-  const apiVersion = process.env.WHATSAPP_API_VERSION || 'v21.0';
-  const url = `https://graph.facebook.com/${apiVersion}/${id}/messages`;
+  const start = new Date(checkIn);
+  const end = new Date(checkOut);
+  const nights = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
 
-  const payload = {
-    messaging_product: 'whatsapp',
-    to: recipient,
-    type: 'text',
-    text: { body: text },
-  };
-
-  console.log('📤 Enviando mensaje WhatsApp:', { phoneNumberId: id, to: recipient, tokenExists: !!token, tokenLength: token?.length, textPreview: text.slice(0, 80) });
-  console.log('📤 URL completa:', url);
-  console.log('📤 JSON body enviado a Meta:', JSON.stringify(payload, null, 2));
-  console.log('LOG_DEBUG: Enviando a URL', url, 'con Body', JSON.stringify(payload));
-
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + token,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const metaResponse = await res.text();
-    console.log('Respuesta de Meta:', metaResponse);
-
-    if (!res.ok) {
-      console.error('❌ WhatsApp API error - status:', res.status, '| url:', url, '| payload:', JSON.stringify(payload));
-    } else {
-      console.log('✅ Mensaje WhatsApp enviado correctamente');
-    }
-  } catch (err) {
-    console.error('❌ WhatsApp fetch exception:', (err as Error).message, (err as Error).stack);
-  }
+  return nights * room.price_per_night * guestCount;
 }
 
-function insertReservation(userId: string, data: Record<string, string>, supabase: SupabaseClient) {
+async function validateRoomAvailability(
+  roomId: string,
+  checkIn: string,
+  checkOut: string,
+  supabase: SupabaseClient,
+  userId: string
+): Promise<{ available: boolean; error?: string }> {
+  const { data: existing } = await supabase
+    .from('reservations')
+    .select('id, check_in, check_out')
+    .eq('room_id', roomId)
+    .eq('user_id', userId)
+    .neq('status', 'cancelled')
+    .neq('status', 'checked-out');
+
+  if (!existing || existing.length === 0) return { available: true };
+
+  const newStart = new Date(checkIn);
+  const newEnd = new Date(checkOut);
+
+  for (const res of existing) {
+    const resStart = new Date(res.check_in);
+    const resEnd = new Date(res.check_out);
+    if (newStart < resEnd && newEnd > resStart) {
+      return { available: false, error: 'La habitación ya está reservada en esas fechas' };
+    }
+  }
+
+  return { available: true };
+}
+
+function insertReservation(userId: string, data: Record<string, string>, totalAmount: number, supabase: SupabaseClient) {
   return supabase.from('reservations').insert({
     user_id: userId,
     room_id: data.room_id,
@@ -141,7 +141,7 @@ function insertReservation(userId: string, data: Record<string, string>, supabas
     check_in: data.check_in,
     check_out: data.check_out,
     status: 'confirmed',
-    total_amount: 0,
+    total_amount: totalAmount,
   });
 }
 
@@ -334,7 +334,21 @@ async function processWhatsAppMessage(body: any) {
           guest_count: parts[6]?.trim() || '1',
         };
 
-        const { error: insertError } = await insertReservation(userId, resData, supabase);
+        if (!resData.room_id) {
+          await sendWhatsAppMessage(token, phoneNumberId, from, 'No se encontró la habitación seleccionada. Por favor, intentá de nuevo.');
+          return;
+        }
+
+        const availability = await validateRoomAvailability(resData.room_id, resData.check_in, resData.check_out, supabase, userId);
+        if (!availability.available) {
+          await sendWhatsAppMessage(token, phoneNumberId, from, 'Lo siento, esa habitación ya no está disponible en las fechas solicitadas. Por favor, consultá otras opciones.');
+          return;
+        }
+
+        const guestCount = parseInt(resData.guest_count || '1', 10);
+        const totalAmount = calculateTotalAmount(resData.room_id, resData.check_in, resData.check_out, guestCount, hostelData.rooms);
+
+        const { error: insertError } = await insertReservation(userId, resData, totalAmount, supabase);
 
         if (insertError) {
           console.error('❌ Error insertando reserva:', insertError);
@@ -346,7 +360,7 @@ async function processWhatsAppMessage(body: any) {
           ? `\n\nPara pagar: ${hostelData.config.link_pago}`
           : '';
 
-        await sendWhatsAppMessage(token, phoneNumberId, from, `✅ ¡Reserva confirmada! Te esperamos el ${resData.check_in}.${linkPago}`);
+        await sendWhatsAppMessage(token, phoneNumberId, from, `✅ ¡Reserva confirmada! Total: $${totalAmount}. Te esperamos el ${resData.check_in}.${linkPago}`);
         return;
       }
     }
